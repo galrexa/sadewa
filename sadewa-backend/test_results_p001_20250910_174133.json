@@ -1,0 +1,72 @@
+{
+  "analysis_timestamp": "2025-09-10T17:41:30.977844",
+  "patient_id": "P001",
+  "overall_risk_level": "MAJOR",
+  "safe_to_prescribe": false,
+  "warnings": [
+    {
+      "severity": "MAJOR",
+      "type": "DRUG_INTERACTION",
+      "drugs_involved": [
+        "Warfarin",
+        "Ibuprofen"
+      ],
+      "description": "Penggunaan bersamaan meningkatkan risiko pendarahan secara signifikan karena efek antiplatelet dari NSAID.",
+      "clinical_significance": "Pendarahan mayor termasuk perdarahan GI dan intrakranial dapat terjadi.",
+      "recommendation": "Hindari penggunaan Ibuprofen bersamaan dengan Warfarin. Pertimbangkan alternatif analgesik yang aman seperti Paracetamol.",
+      "monitoring_required": "Pantau INR dan tanda-tanda pendarahan jika Ibuprofen masih dipertimbangkan untuk digunakan."
+    },
+    {
+      "severity": "MODERATE",
+      "type": "DRUG_INTERACTION",
+      "drugs_involved": [
+        "Lisinopril",
+        "Ibuprofen"
+      ],
+      "description": "Ibuprofen dapat mengurangi efektivitas ACE inhibitor dan dapat menyebabkan gangguan fungsi ginjal.",
+      "clinical_significance": "Efektivitas Lisinopril dalam mengontrol tekanan darah mungkin berkurang, dan fungsi ginjal perlu dipantau.",
+      "recommendation": "Pantau tekanan darah dan fungsi ginjal secara teratur jika Ibuprofen digunakan bersamaan dengan Lisinopril.",
+      "monitoring_required": "Pemeriksaan fungsi ginjal dan tekanan darah secara teratur."
+    },
+    {
+      "severity": "MODERATE",
+      "type": "AGE_RELATED",
+      "drugs_involved": [
+        "Ibuprofen 400mg TID (for knee pain)"
+      ],
+      "description": "Potentially inappropriate medication in elderly patient (age 72)",
+      "clinical_significance": "Increased risk of adverse effects in geriatric population",
+      "recommendation": "Consider alternative medication or lower dose",
+      "monitoring_required": "Enhanced monitoring for adverse effects"
+    }
+  ],
+  "contraindications": [
+    {
+      "drug": "Ibuprofen",
+      "diagnosis": "Atrial Fibrillation",
+      "reason": "Ibuprofen dapat meningkatkan risiko pendarahan saat digunakan dengan antikoagulan seperti Warfarin.",
+      "alternative_suggested": "Paracetamol"
+    }
+  ],
+  "dosing_adjustments": [
+    {
+      "drug": "Warfarin",
+      "standard_dose": "5mg OD",
+      "recommended_dose": "Perlu penyesuaian dosis berdasarkan INR",
+      "reason": "Interaksi dengan Ibuprofen dapat meningkatkan risiko pendarahan."
+    }
+  ],
+  "monitoring_plan": [
+    "INR",
+    "Tanda-tanda pendarahan",
+    "Fungsi ginjal",
+    "Tekanan darah",
+    "Monitor kidney function (eGFR) regularly"
+  ],
+  "llm_reasoning": "Analisis ini didasarkan pada interaksi obat yang signifikan antara Ibuprofen dan Warfarin, yang dapat meningkatkan risiko pendarahan mayor. Selain itu, interaksi antara Ibuprofen dan Lisinopril juga perlu dipertimbangkan karena dapat mengurangi efektivitas Lisinopril dan menyebabkan gangguan fungsi ginjal. Penggunaan Ibuprofen pada pasien dengan Atrial Fibrillation yang sudah menggunakan Warfarin tidak direkomendasikan karena risiko pendarahan yang tinggi.",
+  "confidence_score": 0.95,
+  "error": false,
+  "error_message": null,
+  "processing_time": 2.535,
+  "from_cache": false
+}

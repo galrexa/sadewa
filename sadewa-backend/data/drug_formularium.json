@@ -1,0 +1,497 @@
+[
+  {
+    "drug_name": "Amlodipine",
+    "indications": ["I10", "I20.9"],
+    "contraindications": { "diseases": ["I95.2", "R57.0", "I35.0"] }
+  },
+  {
+    "drug_name": "Captopril",
+    "indications": ["I10", "I50.0"],
+    "contraindications": { "diseases": ["N04", "I35.0", "Z94.0"] }
+  },
+  {
+    "drug_name": "Valsartan",
+    "indications": ["I10", "I50.0"],
+    "contraindications": { "diseases": ["K72.9", "O00-O9A"] }
+  },
+  {
+    "drug_name": "Bisoprolol",
+    "indications": ["I10", "I25.2"],
+    "contraindications": { "diseases": ["I50.1", "I49.3", "J45.9"] }
+  },
+  {
+    "drug_name": "Furosemide",
+    "indications": ["I50.0", "R60.1"],
+    "contraindications": { "diseases": ["N17", "K72.9", "E86"] }
+  },
+  {
+    "drug_name": "Simvastatin",
+    "indications": ["E78.0"],
+    "contraindications": { "diseases": ["K71", "K72.9", "O00-O9A"] }
+  },
+  {
+    "drug_name": "Atorvastatin",
+    "indications": ["E78.0"],
+    "contraindications": { "diseases": ["K71", "K72.9", "O00-O9A"] }
+  },
+  {
+    "drug_name": "Aspirin",
+    "indications": ["I21", "I63", "R52.9"],
+    "contraindications": { "diseases": ["K25", "K26", "D68.9", "J45.9"] }
+  },
+  {
+    "drug_name": "Clopidogrel",
+    "indications": ["I21", "I63"],
+    "contraindications": { "diseases": ["K25", "D68.9", "K72.9"] }
+  },
+  {
+    "drug_name": "Digoxin",
+    "indications": ["I48", "I50.0"],
+    "contraindications": { "diseases": ["I47.2", "I42.0"] }
+  },
+  {
+    "drug_name": "Isosorbide Dinitrate",
+    "indications": ["I20.9"],
+    "contraindications": { "diseases": ["I95.2", "I42.0", "R57.0"] }
+  },
+  {
+    "drug_name": "Metformin",
+    "indications": ["E11"],
+    "contraindications": { "diseases": ["N17", "N18.5", "N18.6", "E87.2", "K72.9"] }
+  },
+  {
+    "drug_name": "Glibenclamide",
+    "indications": ["E11"],
+    "contraindications": { "diseases": ["E10", "K72.9", "N18.5"] }
+  },
+  {
+    "drug_name": "Glimepiride",
+    "indications": ["E11"],
+    "contraindications": { "diseases": ["E10", "K72.9", "N18.5"] }
+  },
+  {
+    "drug_name": "Insulin Glargine",
+    "indications": ["E10", "E11"],
+    "contraindications": { "diseases": ["E16.2"] }
+  },
+  {
+    "drug_name": "Paracetamol",
+    "indications": ["R52.9", "R50.9"],
+    "contraindications": { "diseases": ["K72.9", "K71"] }
+  },
+  {
+    "drug_name": "Ibuprofen",
+    "indications": ["R52.9", "M19.9"],
+    "contraindications": { "diseases": ["K25", "K26", "I50.0", "N18.5", "J45.9"] }
+  },
+  {
+    "drug_name": "Asam Mefenamat",
+    "indications": ["R52.9"],
+    "contraindications": { "diseases": ["K25", "K26", "I50.0", "N18.5", "J45.9"] }
+  },
+  {
+    "drug_name": "Natrium Diklofenak",
+    "indications": ["M19.9", "M05"],
+    "contraindications": { "diseases": ["K25", "K26", "I50.0", "N18.5", "J45.9"] }
+  },
+  {
+    "drug_name": "Meloxicam",
+    "indications": ["M19.9", "M05"],
+    "contraindications": { "diseases": ["K25", "K26", "I50.0", "N18.5", "J45.9"] }
+  },
+  {
+    "drug_name": "Tramadol",
+    "indications": ["R52.2"],
+    "contraindications": { "diseases": ["F11.2", "K72.9", "N18.5", "G40.9"] }
+  },
+  {
+    "drug_name": "Amoxicillin",
+    "indications": ["J02.9", "J01.9"],
+    "contraindications": { "diseases": ["B27"] }
+  },
+  {
+    "drug_name": "Ciprofloxacin",
+    "indications": ["N39.0", "J15.6"],
+    "contraindications": { "diseases": ["G70.0", "M67.4"] }
+  },
+  {
+    "drug_name": "Azithromycin",
+    "indications": ["J18.9", "J02.9"],
+    "contraindications": { "diseases": ["K71", "I49.8"] }
+  },
+  {
+    "drug_name": "Cefixime",
+    "indications": ["N39.0", "J02.9"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Doxycycline",
+    "indications": ["A69.2", "J15.7"],
+    "contraindications": { "diseases": ["K72.9", "O00-O9A"] }
+  },
+  {
+    "drug_name": "Omeprazole",
+    "indications": ["K21.9", "K25"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Lansoprazole",
+    "indications": ["K21.9", "K25"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Ranitidine",
+    "indications": ["K21.9", "K25"],
+    "contraindications": { "diseases": ["N18.5"] }
+  },
+  {
+    "drug_name": "Antasida (Kombinasi)",
+    "indications": ["K21.9"],
+    "contraindications": { "diseases": ["N18.5"] }
+  },
+  {
+    "drug_name": "Domperidone",
+    "indications": ["R11.2"],
+    "contraindications": { "diseases": ["I49.8", "K72.9"] }
+  },
+  {
+    "drug_name": "Loperamide",
+    "indications": ["A09.9"],
+    "contraindications": { "diseases": ["K51", "K52.8"] }
+  },
+  {
+    "drug_name": "Salbutamol",
+    "indications": ["J45.9"],
+    "contraindications": { "diseases": ["I49.9"] }
+  },
+  {
+    "drug_name": "Cetirizine",
+    "indications": ["L29.9", "J30.4"],
+    "contraindications": { "diseases": ["N18.6"] }
+  },
+  {
+    "drug_name": "Loratadine",
+    "indications": ["L29.9", "J30.4"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Ambroxol",
+    "indications": ["J42"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Dextromethorphan",
+    "indications": ["R05"],
+    "contraindications": { "diseases": ["J45.9"] }
+  },
+  {
+    "drug_name": "Prednisone",
+    "indications": ["J45.9", "M05"],
+    "contraindications": { "diseases": ["A15", "B01.9", "B34.9"] }
+  },
+  {
+    "drug_name": "Methylprednisolone",
+    "indications": ["J45.9", "M05"],
+    "contraindications": { "diseases": ["A15", "B01.9", "B34.9"] }
+  },
+  {
+    "drug_name": "Dexamethasone",
+    "indications": ["J45.9", "M05"],
+    "contraindications": { "diseases": ["A15", "B01.9", "B34.9"] }
+  },
+  {
+    "drug_name": "Allopurinol",
+    "indications": ["M10"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Diazepam",
+    "indications": ["F41.9", "R25.2"],
+    "contraindications": { "diseases": ["G47.3", "K72.9", "G70.0"] }
+  },
+  {
+    "drug_name": "Alprazolam",
+    "indications": ["F41.1"],
+    "contraindications": { "diseases": ["G47.3", "K72.9", "G70.0", "H40.0"] }
+  },
+  {
+    "drug_name": "Asam Folat",
+    "indications": ["D52.9"],
+    "contraindications": { "diseases": ["C91.0", "D51.0"] }
+  },
+  {
+    "drug_name": "Vitamin C",
+    "indications": ["E54"],
+    "contraindications": { "diseases": ["N20.0"] }
+  },
+  {
+    "drug_name": "Kalsium Karbonat",
+    "indications": ["E58"],
+    "contraindications": { "diseases": ["E83.5", "N20.0"] }
+  },
+  {
+    "drug_name": "Sildenafil",
+    "indications": ["F52.2"],
+    "contraindications": { "diseases": ["I21", "I63", "I95.2", "K72.9"] }
+  },
+  {
+    "drug_name": "Gabapentin",
+    "indications": ["G40.9", "G62.9"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Levothyroxine",
+    "indications": ["E03.9"],
+    "contraindications": { "diseases": ["E05.0", "I21", "E15"] }
+  },
+  {
+    "drug_name": "Warfarin",
+    "indications": ["I48", "I82.9"],
+    "contraindications": { "diseases": ["D68.9", "K25", "I60", "O00-O9A"] }
+  },
+  {
+    "drug_name": "Sertraline",
+    "indications": ["F32.9", "F41.1"],
+    "contraindications": { "diseases": ["G40.9", "F03"] }
+  },
+  {
+    "drug_name": "Fluoxetine",
+    "indications": ["F32.9", "F42"],
+    "contraindications": { "diseases": ["G40.9", "F03"] }
+  },
+  {
+    "drug_name": "Amitriptyline",
+    "indications": ["F32.9", "G62.9"],
+    "contraindications": { "diseases": ["I21", "I49.9", "H40.0"] }
+  },
+  {
+    "drug_name": "Risperidone",
+    "indications": ["F20.9", "F31.9"],
+    "contraindications": { "diseases": ["F03", "G20"] }
+  },
+  {
+    "drug_name": "Haloperidol",
+    "indications": ["F20.9", "R22.0"],
+    "contraindications": { "diseases": ["G20", "R56.9"] }
+  },
+  {
+    "drug_name": "Carbamazepine",
+    "indications": ["G40.9", "F31.9"],
+    "contraindications": { "diseases": ["D61.9", "I45.5"] }
+  },
+  {
+    "drug_name": "Phenytoin",
+    "indications": ["G40.9"],
+    "contraindications": { "diseases": ["I44.2", "I49.3"] }
+  },
+  {
+    "drug_name": "Asam Valproat",
+    "indications": ["G40.9", "F31.9"],
+    "contraindications": { "diseases": ["K72.9", "K71", "F03", "O00-O9A"] }
+  },
+  {
+    "drug_name": "Levodopa (+Carbidopa)",
+    "indications": ["G20"],
+    "contraindications": { "diseases": ["H40.0", "C43"] }
+  },
+  {
+    "drug_name": "Sumatriptan",
+    "indications": ["G43.9"],
+    "contraindications": { "diseases": ["I10", "I25.1", "I63"] }
+  },
+  {
+    "drug_name": "Co-amoxiclav",
+    "indications": ["J01.9", "J18.9"],
+    "contraindications": { "diseases": ["K71", "B27"] }
+  },
+  {
+    "drug_name": "Clindamycin",
+    "indications": ["L02", "A41.9"],
+    "contraindications": { "diseases": ["K51", "K50"] }
+  },
+  {
+    "drug_name": "Metronidazole",
+    "indications": ["A06", "A07.1"],
+    "contraindications": { "diseases": ["O00-O9A"] }
+  },
+  {
+    "drug_name": "Ketoconazole",
+    "indications": ["B35.1"],
+    "contraindications": { "diseases": ["K72.9", "K71", "I49.8"] }
+  },
+  {
+    "drug_name": "Fluconazole",
+    "indications": ["B37.0"],
+    "contraindications": { "diseases": ["K72.9", "I49.8"] }
+  },
+  {
+    "drug_name": "Nystatin",
+    "indications": ["B37.0"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Acyclovir",
+    "indications": ["B00.9", "B02.9"],
+    "contraindications": { "diseases": ["N18.5"] }
+  },
+  {
+    "drug_name": "Rifampicin (Rifampin)",
+    "indications": ["A15.0"],
+    "contraindications": { "diseases": ["K72.9"] }
+  },
+  {
+    "drug_name": "Isoniazid (INH)",
+    "indications": ["A15.0"],
+    "contraindications": { "diseases": ["K71", "K72.9"] }
+  },
+  {
+    "drug_name": "Levonorgestrel",
+    "indications": ["Z30.0"],
+    "contraindications": { "diseases": ["O00-O9A", "K72.9"] }
+  },
+  {
+    "drug_name": "Ethinylestradiol",
+    "indications": ["Z30.0"],
+    "contraindications": { "diseases": ["I82.9", "I63", "C50.9", "O00-O9A"] }
+  },
+  {
+    "drug_name": "Spironolactone",
+    "indications": ["I10", "I50.0"],
+    "contraindications": { "diseases": ["N18.5", "E87.5", "E26.0"] }
+  },
+  {
+    "drug_name": "Alendronate",
+    "indications": ["M81.0"],
+    "contraindications": { "diseases": ["K22.1", "E83.5"] }
+  },
+  {
+    "drug_name": "Propylthiouracil (PTU)",
+    "indications": ["E05.0"],
+    "contraindications": { "diseases": ["K72.9"] }
+  },
+  {
+    "drug_name": "Fenofibrate",
+    "indications": ["E78.5"],
+    "contraindications": { "diseases": ["K72.9", "N18.5", "K80"] }
+  },
+  {
+    "drug_name": "Eperisone",
+    "indications": ["M62.8"],
+    "contraindications": { "diseases": ["K72.9"] }
+  },
+  {
+    "drug_name": "Tizanidine",
+    "indications": ["M62.8"],
+    "contraindications": { "diseases": ["K72.9"] }
+  },
+  {
+    "drug_name": "Colchicine",
+    "indications": ["M10"],
+    "contraindications": { "diseases": ["N18.5", "K72.9", "D69.6"] }
+  },
+  {
+    "drug_name": "Glucosamine",
+    "indications": ["M19.9"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Theophylline",
+    "indications": ["J45.9"],
+    "contraindications": { "diseases": ["I49.9", "K25", "G40.9"] }
+  },
+  {
+    "drug_name": "Mometasone Furoate",
+    "indications": ["J30.4"],
+    "contraindications": { "diseases": ["A15.0"] }
+  },
+  {
+    "drug_name": "Pseudoephedrine",
+    "indications": ["J00"],
+    "contraindications": { "diseases": ["I10", "I25.1", "E05.0", "H40.0"] }
+  },
+  {
+    "drug_name": "Diphenhydramine",
+    "indications": ["J30.4", "R05"],
+    "contraindications": { "diseases": ["H40.0", "N40", "J45.9"] }
+  },
+  {
+    "drug_name": "Codeine",
+    "indications": ["R52", "R05"],
+    "contraindications": { "diseases": ["J45.9", "G47.3"] }
+  },
+  {
+    "drug_name": "Amiodarone",
+    "indications": ["I47.2", "I48"],
+    "contraindications": { "diseases": ["I44.2", "I49.3", "E05.0"] }
+  },
+  {
+    "drug_name": "Verapamil",
+    "indications": ["I10", "I20.9"],
+    "contraindications": { "diseases": ["I50.0", "I44.2", "I95.2"] }
+  },
+  {
+    "drug_name": "Ondansetron",
+    "indications": ["R11.2"],
+    "contraindications": { "diseases": ["I49.8"] }
+  },
+  {
+    "drug_name": "Hyoscine butylbromide",
+    "indications": ["K59.9"],
+    "contraindications": { "diseases": ["G70.0", "H40.0", "K56.0"] }
+  },
+  {
+    "drug_name": "Betahistine",
+    "indications": ["H81.0"],
+    "contraindications": { "diseases": ["D84.1"] }
+  },
+  {
+    "drug_name": "Methotrexate",
+    "indications": ["M05"],
+    "contraindications": { "diseases": ["D69.6", "K72.9", "N18.5", "O00-O9A"] }
+  },
+  {
+    "drug_name": "Cyclosporine",
+    "indications": ["M05", "Z94.0"],
+    "contraindications": { "diseases": ["N18.5", "I10", "K72.9"] }
+  },
+  {
+    "drug_name": "Tamsulosin",
+    "indications": ["N40"],
+    "contraindications": { "diseases": ["K72.9", "I95.1"] }
+  },
+  {
+    "drug_name": "Finasteride",
+    "indications": ["N40"],
+    "contraindications": { "diseases": ["O00-O9A"] }
+  },
+  {
+    "drug_name": "Ferrous Sulfate",
+    "indications": ["D50.9"],
+    "contraindications": { "diseases": ["D56", "D57"] }
+  },
+  {
+    "drug_name": "Vitamin B Complex",
+    "indications": ["E53.9"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Mecobalamin",
+    "indications": ["G62.9"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Vitamin D3",
+    "indications": ["E55.9"],
+    "contraindications": { "diseases": ["E83.5", "N20.0"] }
+  },
+  {
+    "drug_name": "Zinc Sulfate",
+    "indications": ["E60"],
+    "contraindications": { "diseases": [] }
+  },
+  {
+    "drug_name": "Omega-3",
+    "indications": ["E78.5"],
+    "contraindications": { "diseases": ["D68.9"] }
+  }
+]

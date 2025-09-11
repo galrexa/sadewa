@@ -1,0 +1,58 @@
+# Backend (Python/FastAPI)
+sadewa-backend/__pycache__/
+sadewa-backend/*.py[cod]
+sadewa-backend/*$py.class
+sadewa-backend/.env
+sadewa-backend/venv/
+sadewa-backend/.venv/
+sadewa-backend/env/
+sadewa-backend/.pytest_cache/
+sadewa-backend/instance/
+sadewa-backend/.coverage
+
+*.env
+*.env.local
+*.env.development
+*.env.test
+*.env.production
+*/.env
+
+# Frontend (React/Vite)
+sadewa-frontend/node_modules/
+sadewa-frontend/dist/
+sadewa-frontend/.env
+sadewa-frontend/.env.local
+sadewa-frontend/.env.development.local
+sadewa-frontend/.env.test.local
+sadewa-frontend/.env.production.local
+sadewa-frontend/npm-debug.log*
+sadewa-frontend/yarn-debug.log*
+sadewa-frontend/yarn-error.log*
+sadewa-frontend/.vite/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock

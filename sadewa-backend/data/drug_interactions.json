@@ -1,0 +1,1010 @@
+[
+  {
+    "drug_a": "Captopril",
+    "drug_b": "Spironolactone",
+    "severity": "Major",
+    "description": "Meningkatkan risiko hiperkalemia (kadar kalium terlalu tinggi)."
+  },
+  {
+    "drug_a": "Valsartan",
+    "drug_b": "Spironolactone",
+    "severity": "Major",
+    "description": "Meningkatkan risiko hiperkalemia (kadar kalium terlalu tinggi)."
+  },
+  {
+    "drug_a": "Bisoprolol",
+    "drug_b": "Pseudoephedrine",
+    "severity": "Moderate",
+    "description": "Pseudoephedrine dapat mengurangi efektivitas obat antihipertensi."
+  },
+  {
+    "drug_a": "Furosemide",
+    "drug_b": "Ibuprofen",
+    "severity": "Moderate",
+    "description": "NSAID dapat mengurangi efektivitas Furosemide."
+  },
+  {
+    "drug_a": "Simvastatin",
+    "drug_b": "Warfarin",
+    "severity": "Moderate",
+    "description": "Dapat sedikit meningkatkan risiko pendarahan."
+  },
+  {
+    "drug_a": "Simvastatin",
+    "drug_b": "Amiodarone",
+    "severity": "Major",
+    "description": "Meningkatkan risiko kerusakan otot serius (miopati). Dosis Simvastatin harus dibatasi."
+  },
+  {
+    "drug_a": "Simvastatin",
+    "drug_b": "Verapamil",
+    "severity": "Major",
+    "description": "Meningkatkan risiko kerusakan otot serius (miopati). Dosis Simvastatin harus dibatasi."
+  },
+  {
+    "drug_a": "Atorvastatin",
+    "drug_b": "Azithromycin",
+    "severity": "Moderate",
+    "description": "Meningkatkan risiko miopati atau rhabdomyolysis, meskipun risikonya rendah."
+  },
+  {
+    "drug_a": "Atorvastatin",
+    "drug_b": "Cyclosporine",
+    "severity": "Major",
+    "description": "Meningkatkan konsentrasi Atorvastatin, risiko tinggi kerusakan otot."
+  },
+  {
+    "drug_a": "Aspirin",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Meningkatkan risiko pendarahan secara signifikan."
+  },
+  {
+    "drug_a": "Aspirin",
+    "drug_b": "Clopidogrel",
+    "severity": "Moderate",
+    "description": "Penggunaan bersamaan meningkatkan risiko pendarahan, meskipun sering diresepkan bersamaan di bawah pengawasan."
+  },
+  {
+    "drug_a": "Clopidogrel",
+    "drug_b": "Omeprazole",
+    "severity": "Moderate",
+    "description": "Omeprazole dapat mengurangi efektivitas Clopidogrel."
+  },
+  {
+    "drug_a": "Digoxin",
+    "drug_b": "Amiodarone",
+    "severity": "Major",
+    "description": "Amiodarone dapat meningkatkan kadar Digoxin dalam darah secara signifikan."
+  },
+  {
+    "drug_a": "Digoxin",
+    "drug_b": "Verapamil",
+    "severity": "Major",
+    "description": "Verapamil dapat meningkatkan kadar Digoxin dalam darah, risiko toksisitas."
+  },
+  {
+    "drug_a": "Ibuprofen",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Meningkatkan risiko pendarahan, terutama pada saluran cerna."
+  },
+  {
+    "drug_a": "Ibuprofen",
+    "drug_b": "Methotrexate",
+    "severity": "Major",
+    "description": "NSAID dapat mengurangi pembuangan Methotrexate, meningkatkan toksisitasnya."
+  },
+  {
+    "drug_a": "Ibuprofen",
+    "drug_b": "Spironolactone",
+    "severity": "Moderate",
+    "description": "NSAID dapat mengurangi efek diuretik dan antihipertensi dari Spironolactone."
+  },
+  {
+    "drug_a": "Natrium Diklofenak",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Meningkatkan risiko pendarahan."
+  },
+  {
+    "drug_a": "Ciprofloxacin",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Ciprofloxacin dapat meningkatkan efek pengencer darah Warfarin."
+  },
+  {
+    "drug_a": "Ciprofloxacin",
+    "drug_b": "Theophylline",
+    "severity": "Major",
+    "description": "Ciprofloxacin meningkatkan kadar Theophylline, risiko toksisitas."
+  },
+  {
+    "drug_a": "Ciprofloxacin",
+    "drug_b": "Doxycycline",
+    "severity": "Minor",
+    "description": "Meskipun jarang signifikan secara klinis, kombinasi antibiotik ini umumnya tidak direkomendasikan kecuali ada indikasi kuat."
+  },
+  {
+    "drug_a": "Azithromycin",
+    "drug_b": "Warfarin",
+    "severity": "Moderate",
+    "description": "Dapat meningkatkan efek Warfarin pada beberapa pasien."
+  },
+  {
+    "drug_a": "Doxycycline",
+    "drug_b": "Ferrous Sulfate",
+    "severity": "Moderate",
+    "description": "Zat besi dapat mengurangi penyerapan Doxycycline. Beri jeda 2-3 jam."
+  },
+  {
+    "drug_a": "Doxycycline",
+    "drug_b": "Kalsium Karbonat",
+    "severity": "Moderate",
+    "description": "Kalsium dapat mengurangi penyerapan Doxycycline. Beri jeda 2-3 jam."
+  },
+  {
+    "drug_a": "Doxycycline",
+    "drug_b": "Antasida (Kombinasi)",
+    "severity": "Moderate",
+    "description": "Antasida dapat mengurangi penyerapan Doxycycline. Beri jeda 2-3 jam."
+  },
+  {
+    "drug_a": "Paracetamol",
+    "drug_b": "Isoniazid (INH)",
+    "severity": "Moderate",
+    "description": "Penggunaan jangka panjang bersamaan dapat meningkatkan risiko kerusakan hati."
+  },
+  {
+    "drug_a": "Tramadol",
+    "drug_b": "Sertraline",
+    "severity": "Major",
+    "description": "Meningkatkan risiko sindrom serotonin, kondisi yang berpotensi mengancam jiwa."
+  },
+  {
+    "drug_a": "Tramadol",
+    "drug_b": "Fluoxetine",
+    "severity": "Major",
+    "description": "Meningkatkan risiko sindrom serotonin."
+  },
+  {
+    "drug_a": "Levothyroxine",
+    "drug_b": "Kalsium Karbonat",
+    "severity": "Moderate",
+    "description": "Kalsium dapat mengurangi penyerapan Levothyroxine. Beri jeda 4 jam."
+  },
+  {
+    "drug_a": "Levothyroxine",
+    "drug_b": "Ferrous Sulfate",
+    "severity": "Moderate",
+    "description": "Zat besi dapat mengurangi penyerapan Levothyroxine. Beri jeda 4 jam."
+  },
+  {
+    "drug_a": "Metronidazole",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Secara signifikan meningkatkan efek pengencer darah Warfarin."
+  },
+  {
+    "drug_a": "Fluconazole",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Secara signifikan meningkatkan efek pengencer darah Warfarin."
+  },
+  {
+    "drug_a": "Fluconazole",
+    "drug_b": "Phenytoin",
+    "severity": "Major",
+    "description": "Fluconazole meningkatkan kadar Phenytoin, risiko toksisitas."
+  },
+  {
+    "drug_a": "Rifampicin (Rifampin)",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Rifampicin secara signifikan mengurangi efektivitas Warfarin."
+  },
+  {
+    "drug_a": "Rifampicin (Rifampin)",
+    "drug_b": "Ketoconazole",
+    "severity": "Major",
+    "description": "Rifampicin mengurangi efektivitas Ketoconazole."
+  },
+  {
+    "drug_a": "Amiodarone",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Amiodarone meningkatkan konsentrasi Warfarin, perlu penyesuaian dosis."
+  },
+  {
+    "drug_a": "Sertraline",
+    "drug_b": "Amitriptyline",
+    "severity": "Major",
+    "description": "Meningkatkan risiko sindrom serotonin dan toksisitas antikolinergik."
+  },
+  {
+    "drug_a": "Sertraline",
+    "drug_b": "Ibuprofen",
+    "severity": "Moderate",
+    "description": "Penggunaan SSRI dengan NSAID dapat meningkatkan risiko pendarahan saluran cerna."
+  },
+  {
+    "drug_a": "Fluoxetine",
+    "drug_b": "Ibuprofen",
+    "severity": "Moderate",
+    "description": "Penggunaan SSRI dengan NSAID dapat meningkatkan risiko pendarahan saluran cerna."
+  },
+  {
+    "drug_a": "Carbamazepine",
+    "drug_b": "Verapamil",
+    "severity": "Moderate",
+    "description": "Verapamil dapat meningkatkan kadar Carbamazepine."
+  },
+  {
+    "drug_a": "Sildenafil",
+    "drug_b": "Amlodipine",
+    "severity": "Moderate",
+    "description": "Keduanya dapat menurunkan tekanan darah, penggunaan bersamaan dapat menyebabkan hipotensi."
+  },
+  {
+    "drug_a": "Ethinylestradiol",
+    "drug_b": "Rifampicin (Rifampin)",
+    "severity": "Major",
+    "description": "Rifampicin dapat mengurangi efektivitas kontrasepsi oral."
+  },
+  {
+    "drug_a": "Ethinylestradiol",
+    "drug_b": "Phenytoin",
+    "severity": "Major",
+    "description": "Phenytoin dapat mengurangi efektivitas kontrasepsi oral."
+  },
+  {
+    "drug_a": "Theophylline",
+    "drug_b": "Azithromycin",
+    "severity": "Minor",
+    "description": "Azithromycin dapat sedikit meningkatkan kadar Theophylline pada beberapa pasien."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Ibuprofen",
+    "severity": "Major",
+    "description": "Meningkatkan risiko perdarahan secara signifikan. Kombinasi dapat menyebabkan perdarahan mayor termasuk perdarahan GI dan intrakranial."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Aspirin",
+    "severity": "Major",
+    "description": "Meningkatkan risiko perdarahan mayor, terutama perdarahan gastrointestinal."
+  },
+  {
+    "drug_a": "Lisinopril",
+    "drug_b": "Ibuprofen",
+    "severity": "Moderate",
+    "description": "Mengurangi efektivitas ACE inhibitor dan dapat menyebabkan gangguan fungsi ginjal."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Paracetamol",
+    "severity": "Minor",
+    "description": "Penggunaan paracetamol dosis tinggi jangka panjang dapat meningkatkan efek antikoagulan secara ringan."
+  },
+  {
+    "drug_a": "Metformin",
+    "drug_b": "Furosemide",
+    "severity": "Minor",
+    "description": "Furosemide dapat meningkatkan konsentrasi Metformin, perlu pemantauan gula darah."
+  },
+  {
+    "drug_a": "Glibenclamide",
+    "drug_b": "Ciprofloxacin",
+    "severity": "Moderate",
+    "description": "Ciprofloxacin dapat meningkatkan efek hipoglikemik (penurunan gula darah) dari Glibenclamide."
+  },
+  {
+    "drug_a": "Codeine",
+    "drug_b": "Diphenhydramine",
+    "severity": "Moderate",
+    "description": "Meningkatkan efek sedasi (rasa kantuk) dan depresi pernapasan."
+  },
+  {
+    "drug_a": "Diazepam",
+    "drug_b": "Omeprazole",
+    "severity": "Moderate",
+    "description": "Omeprazole dapat meningkatkan konsentrasi Diazepam, meningkatkan efek sedasi."
+  },
+  {
+    "drug_a": "Alprazolam",
+    "drug_b": "Ketoconazole",
+    "severity": "Major",
+    "description": "Ketoconazole secara signifikan meningkatkan kadar Alprazolam, risiko sedasi berat."
+  },
+  {
+    "drug_a": "Allopurinol",
+    "drug_b": "Captopril",
+    "severity": "Moderate",
+    "description": "Penggunaan bersamaan dapat meningkatkan risiko reaksi hipersensitivitas, terutama pada pasien dengan gangguan ginjal."
+  },
+  {
+    "drug_a": "Allopurinol",
+    "drug_b": "Amoxicillin",
+    "severity": "Moderate",
+    "description": "Meningkatkan risiko ruam kulit. Disarankan untuk memonitor pasien."
+  },
+  {
+    "drug_a": "Colchicine",
+    "drug_b": "Atorvastatin",
+    "severity": "Major",
+    "description": "Meningkatkan risiko miopati atau rhabdomyolysis (kerusakan otot). Perlu pengawasan ketat."
+  },
+  {
+    "drug_a": "Tamsulosin",
+    "drug_b": "Sildenafil",
+    "severity": "Major",
+    "description": "Dapat menyebabkan hipotensi simtomatik (penurunan tekanan darah yang menimbulkan gejala). Perlu hati-hati."
+  },
+  {
+    "drug_a": "Finasteride",
+    "drug_b": "Ketoconazole",
+    "severity": "Minor",
+    "description": "Ketoconazole dapat sedikit meningkatkan konsentrasi Finasteride dalam darah."
+  },
+  {
+    "drug_a": "Gabapentin",
+    "drug_b": "Antasida (Kombinasi)",
+    "severity": "Moderate",
+    "description": "Antasida dapat mengurangi penyerapan Gabapentin. Beri jeda minimal 2 jam."
+  },
+  {
+    "drug_a": "Levodopa (+Carbidopa)",
+    "drug_b": "Ferrous Sulfate",
+    "severity": "Moderate",
+    "description": "Zat besi dapat mengurangi penyerapan Levodopa, sehingga mengurangi efektivitasnya."
+  },
+  {
+    "drug_a": "Levodopa (+Carbidopa)",
+    "drug_b": "Metoclopramide",
+    "severity": "Major",
+    "description": "Metoclopramide (tidak ada di list, tapi interaksi penting) dapat memperburuk gejala Parkinson. Namun, dengan Domperidone (ada di list), risikonya lebih rendah."
+  },
+  {
+    "drug_a": "Amitriptyline",
+    "drug_b": "Diphenhydramine",
+    "severity": "Major",
+    "description": "Meningkatkan efek antikolinergik (mulut kering, retensi urin, penglihatan kabur) dan sedasi secara signifikan."
+  },
+  {
+    "drug_a": "Haloperidol",
+    "drug_b": "Carbamazepine",
+    "severity": "Moderate",
+    "description": "Carbamazepine dapat menurunkan kadar Haloperidol dalam darah, mengurangi efektivitasnya."
+  },
+  {
+    "drug_a": "Risperidone",
+    "drug_b": "Fluoxetine",
+    "severity": "Moderate",
+    "description": "Fluoxetine dapat meningkatkan konsentrasi Risperidone, berpotensi meningkatkan efek samping."
+  },
+  {
+    "drug_a": "Phenytoin",
+    "drug_b": "Asam Folat",
+    "severity": "Moderate",
+    "description": "Asam Folat dalam dosis tinggi dapat menurunkan konsentrasi Phenytoin, berisiko kejang kambuh."
+  },
+  {
+    "drug_a": "Asam Valproat",
+    "drug_b": "Aspirin",
+    "severity": "Major",
+    "description": "Aspirin dapat meningkatkan kadar Asam Valproat, meningkatkan risiko toksisitas."
+  },
+  {
+    "drug_a": "Asam Valproat",
+    "drug_b": "Meropenem",
+    "severity": "Major",
+    "description": "Meropenem (antibiotik spektrum luas) dapat secara drastis menurunkan kadar Asam Valproat, berisiko tinggi kejang."
+  },
+  {
+    "drug_a": "Betahistine",
+    "drug_b": "Cetirizine",
+    "severity": "Moderate",
+    "description": "Antihistamin seperti Cetirizine secara teoretis dapat mengurangi efek Betahistine."
+  },
+  {
+    "drug_a": "Betahistine",
+    "drug_b": "Diphenhydramine",
+    "severity": "Major",
+    "description": "Antihistamin seperti Diphenhydramine secara teoretis dapat mengurangi efek Betahistine."
+  },
+  {
+    "drug_a": "Hyoscine butylbromide",
+    "drug_b": "Amitriptyline",
+    "severity": "Major",
+    "description": "Meningkatkan risiko efek samping antikolinergik (mulut kering, sembelit, retensi urin)."
+  },
+  {
+    "drug_a": "Ondansetron",
+    "drug_b": "Tramadol",
+    "severity": "Moderate",
+    "description": "Ondansetron dapat mengurangi efek pereda nyeri dari Tramadol."
+  },
+  {
+    "drug_a": "Ondansetron",
+    "drug_b": "Sertraline",
+    "severity": "Major",
+    "description": "Meningkatkan risiko sindrom serotonin."
+  },
+  {
+    "drug_a": "Verapamil",
+    "drug_b": "Bisoprolol",
+    "severity": "Major",
+    "description": "Kombinasi ini meningkatkan risiko bradikardia (denyut jantung lambat), blokade jantung, dan gagal jantung."
+  },
+  {
+    "drug_a": "Amiodarone",
+    "drug_b": "Fluconazole",
+    "severity": "Moderate",
+    "description": "Fluconazole dapat meningkatkan kadar Amiodarone, meningkatkan risiko toksisitas."
+  },
+  {
+    "drug_a": "Codeine",
+    "drug_b": "Alprazolam",
+    "severity": "Major",
+    "description": "Risiko depresi pernapasan, sedasi berat, dan koma meningkat secara signifikan. Harus dihindari."
+  },
+  {
+    "drug_a": "Pseudoephedrine",
+    "drug_b": "Amitriptyline",
+    "severity": "Major",
+    "description": "Dapat menyebabkan krisis hipertensi dan aritmia jantung."
+  },
+  {
+    "drug_a": "Theophylline",
+    "drug_b": "Allopurinol",
+    "severity": "Moderate",
+    "description": "Allopurinol dapat meningkatkan kadar Theophylline dalam darah."
+  },
+  {
+    "drug_a": "Glucosamine",
+    "drug_b": "Warfarin",
+    "severity": "Moderate",
+    "description": "Glucosamine dapat meningkatkan efek antikoagulan dari Warfarin. Perlu pemantauan INR."
+  },
+  {
+    "drug_a": "Co-amoxiclav",
+    "drug_b": "Methotrexate",
+    "severity": "Moderate",
+    "description": "Penisilin dapat mengurangi pembuangan Methotrexate, berpotensi meningkatkan toksisitas."
+  },
+  {
+    "drug_a": "Clindamycin",
+    "drug_b": "Cyclosporine",
+    "severity": "Moderate",
+    "description": "Terdapat laporan kasus penurunan kadar Cyclosporine saat diberikan bersamaan."
+  },
+  {
+    "drug_a": "Metronidazole",
+    "drug_b": "Phenytoin",
+    "severity": "Moderate",
+    "description": "Metronidazole dapat meningkatkan kadar Phenytoin."
+  },
+  {
+    "drug_a": "Ketoconazole",
+    "drug_b": "Alprazolam",
+    "severity": "Major",
+    "description": "Ketoconazole secara signifikan meningkatkan kadar Alprazolam, risiko sedasi berat."
+  },
+  {
+    "drug_a": "Nystatin",
+    "drug_b": "Saccharomyces boulardii",
+    "severity": "Moderate",
+    "description": "Nystatin (antijamur) akan menonaktifkan S. boulardii (probiotik ragi)."
+  },
+  {
+    "drug_a": "Acyclovir",
+    "drug_b": "Ibuprofen",
+    "severity": "Minor",
+    "description": "Penggunaan bersamaan pada pasien dengan gangguan ginjal dapat meningkatkan risiko kerusakan ginjal."
+  },
+  {
+    "drug_a": "Isoniazid (INH)",
+    "drug_b": "Phenytoin",
+    "severity": "Major",
+    "description": "Isoniazid dapat meningkatkan kadar Phenytoin secara signifikan, risiko toksisitas."
+  },
+  {
+    "drug_a": "Propylthiouracil (PTU)",
+    "drug_b": "Warfarin",
+    "severity": "Moderate",
+    "description": "Obat antitiroid dapat mengurangi efek antikoagulan. Dosis Warfarin mungkin perlu disesuaikan."
+  },
+  {
+    "drug_a": "Fenofibrate",
+    "drug_b": "Atorvastatin",
+    "severity": "Moderate",
+    "description": "Meningkatkan risiko miopati, meskipun sering digunakan bersamaan dengan pengawasan."
+  },
+  {
+    "drug_a": "Eperisone",
+    "drug_b": "Methocarbamol",
+    "severity": "Moderate",
+    "description": "Penggunaan dua pelemas otot bersamaan meningkatkan risiko sedasi dan pusing."
+  },
+  {
+    "drug_a": "Tizanidine",
+    "drug_b": "Ciprofloxacin",
+    "severity": "Major",
+    "description": "Ciprofloxacin secara signifikan meningkatkan kadar Tizanidine, berisiko hipotensi dan sedasi berat."
+  },
+  {
+    "drug_a": "Mometasone Furoate",
+    "drug_b": "Ketoconazole",
+    "severity": "Moderate",
+    "description": "Ketoconazole dapat meningkatkan paparan sistemik dari steroid inhalasi/intranasal."
+  },
+  {
+    "drug_a": "Dexamethasone",
+    "drug_b": "Warfarin",
+    "severity": "Moderate",
+    "description": "Kortikosteroid dapat meningkatkan atau menurunkan efek Warfarin. Perlu pemantauan INR."
+  },
+  {
+    "drug_a": "Dexamethasone",
+    "drug_b": "Ciprofloxacin",
+    "severity": "Moderate",
+    "description": "Penggunaan bersamaan meningkatkan risiko tendon pecah (ruptur tendon), terutama pada lansia."
+  },
+  {
+    "drug_a": "Methylprednisolone",
+    "drug_b": "Cyclosporine",
+    "severity": "Major",
+    "description": "Penggunaan bersamaan dapat meningkatkan konsentrasi kedua obat, meningkatkan risiko kejang dan toksisitas lainnya."
+  },
+  {
+    "drug_a": "Prednisone",
+    "drug_b": "Furosemide",
+    "severity": "Moderate",
+    "description": "Meningkatkan risiko hipokalemia (kadar kalium rendah)."
+  },
+  {
+    "drug_a": "Vitamin D3",
+    "drug_b": "Digoxin",
+    "severity": "Moderate",
+    "description": "Kadar kalsium yang tinggi akibat Vitamin D dapat meningkatkan risiko toksisitas Digoxin."
+  },
+  {
+    "drug_a": "Zinc Sulfate",
+    "drug_b": "Ciprofloxacin",
+    "severity": "Moderate",
+    "description": "Zinc dapat mengurangi penyerapan Ciprofloxacin. Beri jeda minimal 2 jam."
+  },
+  {
+    "drug_a": "Omega-3",
+    "drug_b": "Aspirin",
+    "severity": "Minor",
+    "description": "Dosis tinggi Omega-3 dapat memiliki efek antiplatelet ringan, yang bisa bersifat aditif dengan Aspirin."
+  },
+  {
+    "drug_a": "Ambroxol",
+    "drug_b": "Amoxicillin",
+    "severity": "Minor",
+    "description": "Beberapa studi menunjukkan Ambroxol dapat meningkatkan konsentrasi antibiotik di jaringan paru-paru, yang bisa jadi menguntungkan."
+  },
+  {
+    "drug_a": "Domperidone",
+    "drug_b": "Azithromycin",
+    "severity": "Major",
+    "description": "Meningkatkan risiko perpanjangan interval QT pada EKG, yang dapat menyebabkan aritmia serius. Sebaiknya dihindari."
+  },
+  {
+    "drug_a": "Loperamide",
+    "drug_b": "Verapamil",
+    "severity": "Moderate",
+    "description": "Verapamil dapat meningkatkan konsentrasi Loperamide, meningkatkan risiko efek samping pada sistem saraf pusat."
+  },
+  {
+    "drug_a": "Cetirizine",
+    "drug_b": "Alprazolam",
+    "severity": "Moderate",
+    "description": "Meningkatkan efek sedasi dan penurunan kewaspadaan."
+  },
+  {
+    "drug_a": "Loratadine",
+    "drug_b": "Amiodarone",
+    "severity": "Moderate",
+    "description": "Keduanya berpotensi memperpanjang interval QT. Penggunaan bersamaan memerlukan kehati-hatian."
+  },
+  {
+    "drug_a": "Spironolactone",
+    "drug_b": "Omega-3",
+    "severity": "Minor",
+    "description": "Tidak ada interaksi signifikan yang diketahui, umumnya aman digunakan bersama."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Ibuprofen",
+    "severity": "Major",
+    "description": "Penggunaan bersamaan meningkatkan risiko pendarahan secara signifikan karena efek antiplatelet dari NSAID."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Aspirin (dosis rendah)",
+    "severity": "Major",
+    "description": "Kombinasi dengan aspirin meningkatkan risiko pendarahan karena efek antikoagulan dan antiplatelet."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Amoxicillin",
+    "severity": "Moderate",
+    "description": "Amoxicillin dapat meningkatkan efek antikoagulan Warfarin, meningkatkan risiko pendarahan."
+  },
+  {
+    "drug_a": "Clopidogrel",
+    "drug_b": "Omeprazole",
+    "severity": "Moderate",
+    "description": "Omeprazole dapat mengurangi efektivitas Clopidogrel dalam mencegah pembekuan darah."
+  },
+  {
+    "drug_a": "Clopidogrel",
+    "drug_b": "Aspirin (dosis rendah)",
+    "severity": "Moderate",
+    "description": "Kombinasi meningkatkan risiko pendarahan, tetapi sering digunakan bersama dengan pengawasan medis."
+  },
+  {
+    "drug_a": "Sildenafil",
+    "drug_b": "Isosorbide Dinitrate",
+    "severity": "Major",
+    "description": "Kombinasi ini dapat menyebabkan penurunan tekanan darah yang fatal (hipotensi berat)."
+  },
+  {
+    "drug_a": "Sildenafil",
+    "drug_b": "Amlodipine",
+    "severity": "Moderate",
+    "description": "Amlodipine dapat meningkatkan efek hipotensi Sildenafil, menyebabkan penurunan tekanan darah."
+  },
+  {
+    "drug_a": "Simvastatin",
+    "drug_b": "Amiodarone",
+    "severity": "Major",
+    "description": "Amiodarone meningkatkan risiko toksisitas Simvastatin, seperti miopati atau rhabdomyolysis."
+  },
+  {
+    "drug_a": "Simvastatin",
+    "drug_b": "Clarithromycin",
+    "severity": "Major",
+    "description": "Clarithromycin menghambat metabolisme Simvastatin, meningkatkan risiko kerusakan otot (rhabdomyolysis)."
+  },
+  {
+    "drug_a": "Metformin",
+    "drug_b": "Cimetidine",
+    "severity": "Moderate",
+    "description": "Cimetidine dapat meningkatkan konsentrasi Metformin di darah, meningkatkan risiko asidosis laktat."
+  },
+  {
+    "drug_a": "Diazepam",
+    "drug_b": "Fluoxetine",
+    "severity": "Moderate",
+    "description": "Fluoxetine dapat meningkatkan efek sedatif Diazepam karena penghambatan metabolisme."
+  },
+  {
+    "drug_a": "Dexamethasone",
+    "drug_b": "Ketoconazole",
+    "severity": "Moderate",
+    "description": "Ketoconazole meningkatkan konsentrasi Dexamethasone, meningkatkan risiko efek samping kortikosteroid."
+  },
+  {
+    "drug_a": "Captopril",
+    "drug_b": "Spironolactone",
+    "severity": "Major",
+    "description": "Kombinasi dapat menyebabkan hiperkalemia berat karena efek penghematan kalium."
+  },
+  {
+    "drug_a": "Digoxin",
+    "drug_b": "Verapamil",
+    "severity": "Major",
+    "description": "Verapamil meningkatkan konsentrasi Digoxin, meningkatkan risiko toksisitas Digoxin."
+  },
+  {
+    "drug_a": "Rifampicin",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Rifampicin mempercepat metabolisme Warfarin, mengurangi efek antikoagulan."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Asam Mefenamat",
+    "severity": "Major",
+    "description": "Asam Mefenamat meningkatkan risiko pendarahan karena efek antiplatelet NSAID."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Natrium Diklofenak",
+    "severity": "Major",
+    "description": "Natrium Diklofenak dapat meningkatkan risiko pendarahan dengan Warfarin karena efek antiplatelet."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Fluconazole",
+    "severity": "Major",
+    "description": "Fluconazole menghambat metabolisme Warfarin, meningkatkan risiko pendarahan."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Metronidazole",
+    "severity": "Major",
+    "description": "Metronidazole meningkatkan efek antikoagulan Warfarin, meningkatkan risiko pendarahan."
+  },
+  {
+    "drug_a": "Warfarin",
+    "drug_b": "Ciprofloxacin",
+    "severity": "Moderate",
+    "description": "Ciprofloxacin dapat meningkatkan efek Warfarin, meningkatkan risiko pendarahan."
+  },
+  {
+    "drug_a": "Clopidogrel",
+    "drug_b": "Lansoprazole",
+    "severity": "Moderate",
+    "description": "Lansoprazole dapat mengurangi efektivitas Clopidogrel melalui penghambatan enzim CYP2C19."
+  },
+  {
+    "drug_a": "Clopidogrel",
+    "drug_b": "Fluoxetine",
+    "severity": "Moderate",
+    "description": "Fluoxetine dapat mengurangi efektivitas Clopidogrel karena kompetisi enzim metabolisme."
+  },
+  {
+    "drug_a": "Sildenafil",
+    "drug_b": "Verapamil",
+    "severity": "Moderate",
+    "description": "Verapamil dapat meningkatkan efek hipotensi Sildenafil, menyebabkan penurunan tekanan darah."
+  },
+  {
+    "drug_a": "Sildenafil",
+    "drug_b": "Bisoprolol",
+    "severity": "Moderate",
+    "description": "Bisoprolol dapat meningkatkan risiko hipotensi ketika dikombinasikan dengan Sildenafil."
+  },
+  {
+    "drug_a": "Simvastatin",
+    "drug_b": "Ketoconazole",
+    "severity": "Major",
+    "description": "Ketoconazole meningkatkan risiko toksisitas Simvastatin seperti miopati atau rhabdomyolysis."
+  },
+  {
+    "drug_a": "Simvastatin",
+    "drug_b": "Erythromycin",
+    "severity": "Major",
+    "description": "Erythromycin menghambat metabolisme Simvastatin, meningkatkan risiko kerusakan otot."
+  },
+  {
+    "drug_a": "Atorvastatin",
+    "drug_b": "Clarithromycin",
+    "severity": "Major",
+    "description": "Clarithromycin meningkatkan risiko toksisitas Atorvastatin seperti rhabdomyolysis."
+  },
+  {
+    "drug_a": "Atorvastatin",
+    "drug_b": "Ketoconazole",
+    "severity": "Major",
+    "description": "Ketoconazole meningkatkan konsentrasi Atorvastatin, meningkatkan risiko miopati."
+  },
+  {
+    "drug_a": "Metformin",
+    "drug_b": "Ranitidine",
+    "severity": "Moderate",
+    "description": "Ranitidine dapat meningkatkan konsentrasi Metformin, meningkatkan risiko asidosis laktat."
+  },
+  {
+    "drug_a": "Metformin",
+    "drug_b": "Furosemide",
+    "severity": "Moderate",
+    "description": "Furosemide dapat memengaruhi kontrol glikemik pada pasien yang menggunakan Metformin."
+  },
+  {
+    "drug_a": "Diazepam",
+    "drug_b": "Sertraline",
+    "severity": "Moderate",
+    "description": "Sertraline dapat meningkatkan efek sedatif Diazepam karena penghambatan metabolisme."
+  },
+  {
+    "drug_a": "Diazepam",
+    "drug_b": "Omeprazole",
+    "severity": "Moderate",
+    "description": "Omeprazole dapat meningkatkan konsentrasi Diazepam, meningkatkan efek sedatif."
+  },
+  {
+    "drug_a": "Dexamethasone",
+    "drug_b": "Rifampicin",
+    "severity": "Major",
+    "description": "Rifampicin mempercepat metabolisme Dexamethasone, mengurangi efektivitasnya."
+  },
+  {
+    "drug_a": "Dexamethasone",
+    "drug_b": "Phenytoin",
+    "severity": "Major",
+    "description": "Phenytoin meningkatkan metabolisme Dexamethasone, mengurangi efek kortikosteroid."
+  },
+  {
+    "drug_a": "Captopril",
+    "drug_b": "Allopurinol",
+    "severity": "Major",
+    "description": "Kombinasi dapat meningkatkan risiko reaksi hipersensitivitas seperti sindrom Stevens-Johnson."
+  },
+  {
+    "drug_a": "Captopril",
+    "drug_b": "Ibuprofen",
+    "severity": "Moderate",
+    "description": "Ibuprofen dapat mengurangi efek antihipertensi Captopril."
+  },
+  {
+    "drug_a": "Digoxin",
+    "drug_b": "Amiodarone",
+    "severity": "Major",
+    "description": "Amiodarone meningkatkan konsentrasi Digoxin, meningkatkan risiko toksisitas."
+  },
+  {
+    "drug_a": "Digoxin",
+    "drug_b": "Clarithromycin",
+    "severity": "Major",
+    "description": "Clarithromycin meningkatkan konsentrasi Digoxin, meningkatkan risiko aritmia."
+  },
+  {
+    "drug_a": "Rifampicin",
+    "drug_b": "Methotrexate",
+    "severity": "Moderate",
+    "description": "Rifampicin dapat meningkatkan metabolisme Methotrexate, mengurangi efektivitasnya."
+  },
+  {
+    "drug_a": "Rifampicin",
+    "drug_b": "Cyclosporine",
+    "severity": "Major",
+    "description": "Rifampicin mempercepat metabolisme Cyclosporine, mengurangi efek imunosupresan."
+  },
+  {
+    "drug_a": "Amlodipine",
+    "drug_b": "Simvastatin",
+    "severity": "Moderate",
+    "description": "Amlodipine meningkatkan konsentrasi Simvastatin, meningkatkan risiko miopati."
+  },
+  {
+    "drug_a": "Amlodipine",
+    "drug_b": "Clarithromycin",
+    "severity": "Moderate",
+    "description": "Clarithromycin meningkatkan konsentrasi Amlodipine, meningkatkan risiko hipotensi."
+  },
+  {
+    "drug_a": "Bisoprolol",
+    "drug_b": "Insulin Glargine",
+    "severity": "Moderate",
+    "description": "Bisoprolol dapat menyamarkan gejala hipoglikemia pada pasien yang menggunakan insulin."
+  },
+  {
+    "drug_a": "Bisoprolol",
+    "drug_b": "Verapamil",
+    "severity": "Major",
+    "description": "Kombinasi dapat menyebabkan bradikardia atau gagal jantung karena efek aditif pada jantung."
+  },
+  {
+    "drug_a": "Furosemide",
+    "drug_b": "Ibuprofen",
+    "severity": "Moderate",
+    "description": "Ibuprofen dapat mengurangi efek diuretik Furosemide."
+  },
+  {
+    "drug_a": "Furosemide",
+    "drug_b": "Digoxin",
+    "severity": "Moderate",
+    "description": "Furosemide dapat menyebabkan hipokalemia, meningkatkan risiko toksisitas Digoxin."
+  },
+  {
+    "drug_a": "Metformin",
+    "drug_b": "Isoniazid",
+    "severity": "Moderate",
+    "description": "Isoniazid dapat mengurangi kontrol glikemik pada pasien yang menggunakan Metformin."
+  },
+  {
+    "drug_a": "Glimepiride",
+    "drug_b": "Fluconazole",
+    "severity": "Moderate",
+    "description": "Fluconazole dapat meningkatkan konsentrasi Glimepiride, meningkatkan risiko hipoglikemia."
+  },
+  {
+    "drug_a": "Glimepiride",
+    "drug_b": "Rifampicin",
+    "severity": "Moderate",
+    "description": "Rifampicin dapat mengurangi efektivitas Glimepiride karena induksi enzim."
+  },
+  {
+    "drug_a": "Salbutamol",
+    "drug_b": "Bisoprolol",
+    "severity": "Moderate",
+    "description": "Bisoprolol dapat mengurangi efektivitas Salbutamol dalam melebarkan saluran napas."
+  },
+  {
+    "drug_a": "Salbutamol",
+    "drug_b": "Theophylline",
+    "severity": "Moderate",
+    "description": "Kombinasi dapat meningkatkan risiko efek samping kardiovaskular seperti takikardia."
+  },
+  {
+    "drug_a": "Cetirizine",
+    "drug_b": "Diazepam",
+    "severity": "Moderate",
+    "description": "Cetirizine dapat meningkatkan efek sedatif Diazepam."
+  },
+  {
+    "drug_a": "Loratadine",
+    "drug_b": "Erythromycin",
+    "severity": "Moderate",
+    "description": "Erythromycin dapat meningkatkan konsentrasi Loratadine, meningkatkan risiko efek samping."
+  },
+  {
+    "drug_a": "Carbamazepine",
+    "drug_b": "Fluconazole",
+    "severity": "Major",
+    "description": "Fluconazole meningkatkan konsentrasi Carbamazepine, meningkatkan risiko toksisitas."
+  },
+  {
+    "drug_a": "Carbamazepine",
+    "drug_b": "Warfarin",
+    "severity": "Major",
+    "description": "Carbamazepine mempercepat metabolisme Warfarin, mengurangi efek antikoagulan."
+  },
+  {
+    "drug_a": "Phenytoin",
+    "drug_b": "Omeprazole",
+    "severity": "Moderate",
+    "description": "Omeprazole dapat meningkatkan konsentrasi Phenytoin, meningkatkan risiko toksisitas."
+  },
+  {
+    "drug_a": "Asam Valproat",
+    "drug_b": "Carbamazepine",
+    "severity": "Moderate",
+    "description": "Carbamazepine dapat mengurangi konsentrasi Asam Valproat, mengurangi efektivitasnya."
+  },
+  {
+    "drug_a": "Levodopa (+Carbidopa)",
+    "drug_b": "Risperidone",
+    "severity": "Moderate",
+    "description": "Risperidone dapat mengurangi efektivitas Levodopa pada penyakit Parkinson."
+  },
+  {
+    "drug_a": "Sumatriptan",
+    "drug_b": "Sertraline",
+    "severity": "Major",
+    "description": "Kombinasi dapat meningkatkan risiko sindrom serotonin."
+  },
+  {
+    "drug_a": "Co-amoxiclav",
+    "drug_b": "Warfarin",
+    "severity": "Moderate",
+    "description": "Co-amoxiclav dapat meningkatkan efek antikoagulan Warfarin."
+  },
+  {
+    "drug_a": "Clindamycin",
+    "drug_b": "Erythromycin",
+    "severity": "Major",
+    "description": "Kombinasi dapat menyebabkan antagonisme, mengurangi efektivitas kedua antibiotik."
+  },
+  {
+    "drug_a": "Methotrexate",
+    "drug_b": "Ibuprofen",
+    "severity": "Major",
+    "description": "Ibuprofen dapat meningkatkan toksisitas Methotrexate dengan mengurangi ekskresi ginjal."
+  },
+  {
+    "drug_a": "Tamsulosin",
+    "drug_b": "Sildenafil",
+    "severity": "Moderate",
+    "description": "Kombinasi dapat meningkatkan risiko hipotensi ortostatik."
+  },
+  {
+    "drug_a": "Levothyroxine",
+    "drug_b": "Warfarin",
+    "severity": "Moderate",
+    "description": "Levothyroxine dapat meningkatkan efek antikoagulan Warfarin, meningkatkan risiko pendarahan."
+  },
+  {
+    "drug_a": "Propylthiouracil (PTU)",
+    "drug_b": "Warfarin",
+    "severity": "Moderate",
+    "description": "PTU dapat meningkatkan efek antikoagulan Warfarin, meningkatkan risiko pendarahan."
+  }
+]

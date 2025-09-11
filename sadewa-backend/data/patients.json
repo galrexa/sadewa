@@ -1,0 +1,184 @@
+[
+  {
+    "id": "P001",
+    "name": "Bapak Agus Santoso",
+    "age": 72,
+    "gender": "Male",
+    "weight_kg": 68.5,
+    "height_cm": 165,
+    "medical_record_number": "MR001-2024",
+    "registration_date": "2024-01-15",
+
+    "diagnoses_icd10": ["I48.0", "I25.9", "M79.3"],
+
+    "diagnoses_text": [
+      "Atrial Fibrillation (chronic)",
+      "Chronic Ischemic Heart Disease",
+      "Chronic knee pain (osteoarthritis suspected)"
+    ],
+
+    "current_medications": [
+      "Warfarin 5mg OD (for AF stroke prevention)",
+      "Lisinopril 10mg OD (for hypertension)",
+      "Metformin 500mg BID (for diabetes control)",
+      "Atorvastatin 20mg ON (for dyslipidemia)"
+    ],
+
+    "allergies": ["Penicillin (rash)", "Sulfonamides (mild GI upset)"],
+
+    "vital_signs": {
+      "blood_pressure": "138/82 mmHg",
+      "heart_rate": "78 bpm (irregular)",
+      "temperature": "36.7°C",
+      "respiratory_rate": "18/min",
+      "oxygen_saturation": "97% on room air"
+    },
+
+    "laboratory_results": {
+      "last_updated": "2024-09-01",
+      "inr": 2.3,
+      "pt": 28.5,
+      "hemoglobin": 12.8,
+      "creatinine": 1.1,
+      "egfr": 68,
+      "hba1c": 7.2,
+      "ldl_cholesterol": 95
+    },
+
+    "clinical_notes": [
+      {
+        "date": "2024-09-05",
+        "note": "Patient stable on current medications. INR in target range 2-3."
+      },
+      {
+        "date": "2024-09-08",
+        "note": "Complains of worsening knee pain, requests pain medication. Currently using topical diclofenac with minimal relief."
+      }
+    ],
+
+    "risk_factors": [
+      "Age >65 years",
+      "Male gender",
+      "History of atrial fibrillation",
+      "Diabetes mellitus",
+      "Hypertension",
+      "Chronic kidney disease stage 3a"
+    ],
+
+    "contraindications": [
+      "NSAIDs (due to warfarin + bleeding risk + CKD)",
+      "Penicillin-based antibiotics",
+      "High-dose aspirin"
+    ]
+  },
+  {
+    "id": "P002",
+    "name": "Ibu Sari Dewi",
+    "age": 58,
+    "gender": "Female",
+    "diagnoses": ["E11", "N18.3"],
+    "diagnoses_text": [
+      "Type 2 diabetes mellitus",
+      "Chronic kidney disease, stage 3"
+    ],
+    "current_medications": ["Metformin 850mg", "Gliclazide 80mg"],
+    "allergies": [],
+    "notes": "DM type 2 dengan komplikasi nefropati diabetik"
+  },
+  {
+    "id": "P003",
+    "name": "Bapak Hendrik Wijaya",
+    "age": 65,
+    "gender": "Male",
+    "diagnoses": ["I50.9", "J44.0", "E78.5"],
+    "diagnoses_text": [
+      "Heart failure",
+      "COPD with acute exacerbation",
+      "Hyperlipidemia"
+    ],
+    "current_medications": [
+      "Digoxin 0.25mg",
+      "Salbutamol inhaler",
+      "Atorvastatin 20mg"
+    ],
+    "allergies": ["Aspirin"],
+    "notes": "CHF NYHA class II, COPD eksaserbasi akut dalam remisi"
+  },
+  {
+    "id": "P004",
+    "name": "Ibu Rita Maharani",
+    "age": 45,
+    "gender": "Female",
+    "diagnoses": ["M79.3", "K25.9"],
+    "diagnoses_text": ["Panniculitis", "Gastric ulcer"],
+    "current_medications": ["Omeprazole 20mg", "Paracetamol 500mg"],
+    "allergies": ["NSAID"],
+    "notes": "Gastric ulcer kronik, sensitif terhadap NSAID"
+  },
+  {
+    "id": "P005",
+    "name": "Bapak Joko Susilo",
+    "age": 55,
+    "gender": "Male",
+    "diagnoses": ["F32.9", "G40.9"],
+    "diagnoses_text": ["Major depressive disorder", "Epilepsy"],
+    "current_medications": ["Sertraline 50mg", "Phenytoin 100mg"],
+    "allergies": [],
+    "notes": "Depresi mayor dengan epilepsy terkontrol"
+  },
+  {
+    "id": "P006",
+    "name": "Ibu Lestari Putri",
+    "age": 38,
+    "gender": "Female",
+    "diagnoses": ["O99.0"],
+    "diagnoses_text": ["Anemia in pregnancy"],
+    "current_medications": ["Folic acid 5mg", "Iron sulfate 200mg"],
+    "allergies": [],
+    "notes": "Hamil 24 minggu dengan anemia defisiensi besi"
+  },
+  {
+    "id": "P007",
+    "name": "Bapak Rahman Ali",
+    "age": 68,
+    "gender": "Male",
+    "diagnoses": ["C78.0", "R50.9"],
+    "diagnoses_text": ["Secondary malignant neoplasm of lung", "Fever"],
+    "current_medications": ["Morphine 10mg", "Dexamethasone 4mg"],
+    "allergies": ["Codeine"],
+    "notes": "Kanker paru stadium lanjut, palliative care"
+  },
+  {
+    "id": "P008",
+    "name": "Ibu Fatimah Zahra",
+    "age": 62,
+    "gender": "Female",
+    "diagnoses": ["M05.9", "M81.0"],
+    "diagnoses_text": ["Rheumatoid arthritis", "Postmenopausal osteoporosis"],
+    "current_medications": ["Methotrexate 15mg", "Calcium carbonate 500mg"],
+    "allergies": [],
+    "notes": "RA aktif dengan osteoporosis postmenopause"
+  },
+  {
+    "id": "P009",
+    "name": "Bapak Bambang Hartono",
+    "age": 70,
+    "gender": "Male",
+    "diagnoses": ["H25.9", "H35.9"],
+    "diagnoses_text": ["Senile cataract", "Retinal disorder"],
+    "current_medications": ["Latanoprost 0.005%", "Vitamin A 5000 IU"],
+    "allergies": [],
+    "notes": "Katarak senilis bilateral, glaukoma kronik"
+  },
+  {
+    "id": "P010",
+    "name": "Ibu Dewi Sartika",
+    "age": 50,
+    "gender": "Female",
+    "diagnoses": ["E03.9", "D50.9"],
+    "diagnoses_text": ["Hypothyroidism", "Iron deficiency anemia"],
+    "current_medications": ["Levothyroxine 100mcg", "Ferrous sulfate 325mg"],
+    "allergies": ["Shellfish"],
+    "notes": "Hipotiroid dengan anemia defisiensi besi"
+  }
+]
