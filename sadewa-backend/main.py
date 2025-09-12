@@ -5,6 +5,8 @@ Enhanced dengan semua routers dan middleware
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+from app.routers import patients, icd10, interactions, drugs  # Tambah drugs
+
 import os
 
 # Import routers
@@ -35,6 +37,10 @@ app.add_middleware(
 app.include_router(patients.router, prefix="/api", tags=["patients"])
 app.include_router(icd10.router, prefix="/api/icd10", tags=["icd10"])
 app.include_router(interactions.router, prefix="/api", tags=["interactions"])
+app.include_router(patients.router, prefix="/api", tags=["patients"])
+app.include_router(icd10.router, prefix="/api/icd10", tags=["icd10"])
+app.include_router(interactions.router, prefix="/api", tags=["interactions"])
+app.include_router(drugs.router, prefix="/api", tags=["drugs"])  # Tambah ini
 
 @app.get("/")
 async def root():
@@ -59,21 +65,31 @@ async def health_check():
             # Count ICD-10 records
             icd_result = connection.execute(text("SELECT COUNT(*) FROM icds"))
             icd_count = icd_result.scalar()
+            
+            # Count drugs records (jika table sudah ada)
+            try:
+                drug_result = connection.execute(text("SELECT COUNT(*) FROM drugs WHERE is_active = TRUE"))
+                drug_count = drug_result.scalar()
+            except:
+                drug_count = 0
     
     except Exception as e:
         db_status = f"error: {str(e)}"
         icd_count = 0
+        drug_count = 0
     
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "version": "2.0.0",
-        "database_status": db_status,
-        "icd10_records": icd_count,
-        "components": {
-            "api": "operational",
-            "database": db_status,
-            "groq_integration": "configured"
+        "database": {
+            "status": db_status,
+            "icd10_records": icd_count,
+            "drug_records": drug_count  # Tambah ini
+        },
+        "services": {
+            "groq": "available",
+            "mysql": db_status
         }
     }
 

@@ -1,10 +1,11 @@
 """
-SADEWA API Schemas - DAY 2 
-Minimal working version tanpa complex validators
+SADEWA API Schemas - DAY 3 Fixed
+Simplified schemas untuk table structure yang ada
 """
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 from enum import Enum
+from datetime import datetime
 
 
 # Enums
@@ -143,3 +144,85 @@ class PatientSummary(BaseModel):
     age: int = Field(..., description="Umur")
     gender: str = Field(..., description="Jenis kelamin")
     weight_kg: Optional[float] = Field(None, description="Berat badan")
+
+
+# Drug Schemas - SIMPLIFIED untuk table structure yang ada
+class DrugBase(BaseModel):
+    """Schema dasar untuk data obat."""
+    nama_obat: str = Field(..., description="Nama obat dalam Bahasa Indonesia")
+    nama_obat_internasional: str = Field(..., description="Nama obat internasional")
+
+
+class DrugSearchResponse(BaseModel):
+    """Schema untuk hasil pencarian obat - sesuai table drugs yang ada"""
+    id: int = Field(..., description="ID obat")
+    nama_obat: str = Field(..., description="Nama obat dalam Bahasa Indonesia")
+    nama_obat_internasional: str = Field(..., description="Nama obat internasional")
+    display_name: str = Field(..., description="Nama untuk display")
+
+    class Config:
+        from_attributes = True  # Pydantic v2 style
+
+
+class DrugResponse(BaseModel):
+    """Schema untuk detail obat - sesuai table structure yang ada"""
+    id: int = Field(..., description="ID obat")
+    nama_obat: str = Field(..., description="Nama obat dalam Bahasa Indonesia")
+    nama_obat_internasional: str = Field(..., description="Nama obat internasional")
+    is_active: bool = Field(..., description="Status aktif obat")
+    created_at: Optional[datetime] = Field(None, description="Tanggal dibuat")
+
+    class Config:
+        from_attributes = True
+
+
+class DrugInteractionResponse(BaseModel):
+    """Schema untuk response interaksi obat - simple version"""
+    drug_a: str = Field(..., description="Nama obat pertama")
+    drug_b: str = Field(..., description="Nama obat kedua")
+    severity: str = Field(..., description="Tingkat keparahan")
+    description: str = Field(..., description="Deskripsi interaksi")
+    recommendation: Optional[str] = Field(None, description="Rekomendasi")
+    input_drugs: List[str] = Field(..., description="Input drugs dari user")
+
+    class Config:
+        from_attributes = True
+
+
+class DrugStatsResponse(BaseModel):
+    """Schema untuk statistik database obat"""
+    total_drugs: int = Field(..., description="Total obat dalam database")
+    total_interactions: int = Field(..., description="Total interaksi dalam database")
+    sample_drugs: List[Dict[str, str]] = Field(..., description="Sample obat")
+    database_status: str = Field(..., description="Status koneksi database")
+    last_updated: str = Field(..., description="Tanggal update terakhir")
+
+
+class DrugAutocompleteResponse(BaseModel):
+    """Schema untuk autocomplete obat"""
+    query: str = Field(..., description="Query yang dicari")
+    suggestions: List[str] = Field(..., description="Daftar suggestions")
+
+
+class DrugInteractionCheckResponse(BaseModel):
+    """Schema untuk response check interactions"""
+    input_drugs: List[str] = Field(..., description="Input drugs dari user")
+    interactions_found: int = Field(..., description="Jumlah interaksi ditemukan")
+    interactions: List[DrugInteractionResponse] = Field(..., description="Daftar interaksi")
+
+
+class AddInteractionRequest(BaseModel):
+    """Schema untuk request tambah interaksi manual"""
+    drug_a: str = Field(..., description="Nama obat pertama")
+    drug_b: str = Field(..., description="Nama obat kedua")
+    severity: str = Field(..., description="Tingkat keparahan (Major/Moderate/Minor)")
+    description: str = Field(..., description="Deskripsi interaksi")
+    recommendation: Optional[str] = Field(None, description="Rekomendasi")
+
+
+class AddInteractionResponse(BaseModel):
+    """Schema untuk response tambah interaksi"""
+    message: str = Field(..., description="Pesan sukses")
+    drug_a: str = Field(..., description="Nama obat pertama")
+    drug_b: str = Field(..., description="Nama obat kedua")
+    severity: str = Field(..., description="Tingkat keparahan")
