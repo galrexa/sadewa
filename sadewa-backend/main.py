@@ -5,6 +5,9 @@ import os
 
 # Import routers
 from app.routers import patients
+from app.routers import icd10
+from app.routers import drugs
+from app.routers import interactions
 
 # Import database (untuk health check)
 from app.database import engine
@@ -29,9 +32,9 @@ app.add_middleware(
 
 # Include routers dengan prefix yang benar
 app.include_router(patients.router, prefix="/api", tags=["patients"])
-# app.include_router(icd10.router, prefix="/api/icd10", tags=["icd10"])
-# app.include_router(interactions.router, prefix="/api", tags=["interactions"])
-# app.include_router(drugs.router, prefix="/api/drugs", tags=["drugs"])  # Fixed prefix
+app.include_router(icd10.router, prefix="/api/icd10", tags=["icd10"])
+app.include_router(interactions.router, prefix="/api", tags=["interactions"])
+app.include_router(drugs.router, prefix="/api/drugs", tags=["drugs"])  # Fixed prefix
 
 @app.get("/")
 async def root():

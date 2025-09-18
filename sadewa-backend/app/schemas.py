@@ -132,10 +132,44 @@ class DrugSearchResponse(BaseModel):
     nama_obat_internasional: str = Field(..., description="Nama internasional")
     display_name: str = Field(..., description="Nama untuk display")
 
-
 # === INTERACTION SCHEMAS (untuk compatibility) ===
 class InteractionRequest(BaseModel):
     """Schema untuk request analisis interaksi"""
     patient_id: str = Field(..., description="ID pasien")
     new_medications: List[str] = Field(..., description="Daftar obat baru")
     notes: Optional[str] = Field("", description="Catatan tambahan")
+
+# === INTERACTION RESPONSE SCHEMAS ===
+class InteractionWarning(BaseModel):
+    """Schema untuk warning dalam analisis interaksi"""
+    severity: str = Field(..., description="Level severity: MAJOR/MODERATE/MINOR")
+    type: str = Field(..., description="Tipe warning")
+    drugs_involved: List[str] = Field(..., description="Obat yang terlibat")
+    description: str = Field(..., description="Deskripsi warning")
+    clinical_significance: str = Field(..., description="Signifikansi klinis")
+    recommendation: str = Field(..., description="Rekomendasi")
+    monitoring_required: Optional[str] = Field(None, description="Monitoring yang diperlukan")
+
+
+class InteractionResponse(BaseModel):
+    """Schema untuk response analisis interaksi"""
+    analysis_timestamp: str = Field(..., description="Timestamp analisis")
+    patient_id: str = Field(..., description="ID pasien")
+    overall_risk_level: str = Field(..., description="Level risiko keseluruhan")
+    safe_to_prescribe: bool = Field(..., description="Aman untuk diresepkan")
+    confidence_score: Optional[float] = Field(None, description="Skor kepercayaan")
+    warnings: List[InteractionWarning] = Field(default_factory=list, description="List warning")
+    contraindications: List[str] = Field(default_factory=list, description="Kontraindikasi")
+    dosing_adjustments: List[str] = Field(default_factory=list, description="Penyesuaian dosis")
+    monitoring_plan: List[str] = Field(default_factory=list, description="Rencana monitoring")
+    llm_reasoning: Optional[str] = Field(None, description="Penalaran AI")
+    processing_time: Optional[float] = Field(None, description="Waktu pemrosesan")
+    from_cache: bool = Field(False, description="Dari cache atau tidak")
+
+
+class GroqTestResponse(BaseModel):
+    """Schema untuk response test Groq API"""
+    success: bool = Field(..., description="Status keberhasilan")
+    response: Optional[str] = Field(None, description="Response dari Groq")
+    error: Optional[str] = Field(None, description="Error message jika ada")
+    timestamp: str = Field(..., description="Timestamp test")

@@ -196,7 +196,7 @@ const Dashboard = () => {
                   </h2>
                   <MedicationInput
                     medications={medications}
-                    onMedicationChange={handleMedicationChange}
+                    onMedicationsChange={handleMedicationChange} // ← Perbaikan nama prop
                   />
 
                   {/* Action Buttons */}

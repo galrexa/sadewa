@@ -62,11 +62,8 @@ class Drug(Base):
 
 # ICD-10 model (missing model)
 class ICD10(Base):
-    __tablename__ = "icd10"
+    __tablename__ = "icds"
 
-    id = Column(Integer, primary_key=True, index=True)
-    code = Column(String(10), nullable=False, index=True)
-    name_id = Column(String(500), nullable=False)
-    name_en = Column(String(500))
-    category = Column(String(100))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    code = Column(String(255), primary_key=True)  # code adalah PK, bukan id
+    name_en = Column(Text, nullable=False)
+    name_id = Column(Text, nullable=False)
