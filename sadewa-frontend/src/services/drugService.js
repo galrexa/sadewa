@@ -1,36 +1,45 @@
-// src/services/drugService.js - New service for drug operations
+// src/services/drugService.js - Enhanced with complete database integration
 import { apiService } from "./api";
 
 export const drugService = {
-  // Search drugs from database
+  // Search drugs in database with autocomplete
   async searchDrugs(query, limit = 10) {
     try {
-      console.log(`🔍 Searching drugs: "${query}"`);
+      console.log("🔍 Searching drugs:", { query, limit });
+
+      if (!query || query.length < 1) {
+        return { success: true, data: [] };
+      }
+
       const response = await apiService.api.get("/api/drugs/search", {
-        params: { q: query, limit },
+        params: {
+          q: query.trim(),
+          limit: limit,
+        },
       });
-      return { success: true, data: response.data };
+
+      console.log("✅ Drug search result:", response.data);
+
+      return {
+        success: true,
+        data: response.data.drugs || [],
+      };
     } catch (error) {
       console.error("❌ Drug search failed:", error);
-      // Fallback to mock data if database not available
-      const mockResults = [
+
+      // Fallback to mock data for development
+      const mockDrugs = [
         {
           id: 1,
-          nama_obat: "Parasetamol",
-          nama_obat_internasional: "Paracetamol",
-          display_name: "Parasetamol (Paracetamol)",
+          nama_obat: "Paracetamol",
+          nama_obat_internasional: "Acetaminophen",
+          is_active: true,
         },
         {
           id: 2,
           nama_obat: "Ibuprofen",
           nama_obat_internasional: "Ibuprofen",
-          display_name: "Ibuprofen (Ibuprofen)",
-        },
-        {
-          id: 3,
-          nama_obat: "Warfarin",
-          nama_obat_internasional: "Warfarin",
-          display_name: "Warfarin (Warfarin)",
+          is_active: true,
         },
       ].filter(
         (drug) =>
@@ -40,37 +49,76 @@ export const drugService = {
             .includes(query.toLowerCase())
       );
 
-      return { success: true, data: mockResults };
+      return {
+        success: true,
+        data: mockDrugs,
+      };
     }
   },
 
-  // Autocomplete for medication input
-  async autocompleteDrugs(query, limit = 5) {
+  // Get drug by exact name
+  async getDrugByName(drugName) {
     try {
-      const response = await apiService.api.get("/api/drugs/autocomplete", {
-        params: { q: query, limit },
+      console.log("🔍 Getting drug by name:", drugName);
+
+      const response = await apiService.api.get("/api/drugs/by-name", {
+        params: { name: drugName.trim() },
       });
-      return response.data.suggestions;
+
+      return {
+        success: true,
+        data: response.data.drug,
+      };
     } catch (error) {
-      console.error("❌ Drug autocomplete failed:", error);
-      // Fallback suggestions
-      const commonDrugs = [
-        "Paracetamol",
-        "Ibuprofen",
-        "Amoxicillin",
-        "Omeprazole",
-        "Metformin",
-      ];
-      return commonDrugs
-        .filter((drug) => drug.toLowerCase().includes(query.toLowerCase()))
-        .slice(0, limit);
+      console.error("❌ Get drug by name failed:", error);
+      return { success: false, data: null };
     }
   },
 
-  // Check interactions using database
-  async checkDrugInteractions(drugNames) {
+  // Validate if drug exists in database
+  async validateDrug(drugName) {
     try {
-      console.log("🧪 Checking drug interactions:", drugNames);
+      const result = await this.searchDrugs(drugName, 1);
+      if (result.success && result.data.length > 0) {
+        // Check for exact match
+        const exactMatch = result.data.find(
+          (drug) =>
+            drug.nama_obat.toLowerCase() === drugName.toLowerCase() ||
+            drug.nama_obat_internasional.toLowerCase() ===
+              drugName.toLowerCase()
+        );
+
+        return {
+          success: true,
+          isValid: !!exactMatch,
+          suggestion: result.data[0], // Best match
+          allMatches: result.data,
+        };
+      }
+
+      return { success: true, isValid: false, suggestion: null };
+    } catch (error) {
+      console.error("❌ Drug validation failed:", error);
+      return { success: false, isValid: false, suggestion: null };
+    }
+  },
+
+  // Check drug-drug interactions
+  async checkDrugInteractions(drugNames = []) {
+    try {
+      console.log("🔍 Checking drug interactions:", drugNames);
+
+      if (!drugNames || drugNames.length < 2) {
+        return {
+          success: true,
+          data: {
+            input_drugs: drugNames,
+            interactions_found: 0,
+            interactions: [],
+          },
+        };
+      }
+
       const drugNamesStr = drugNames.join(",");
       const response = await apiService.api.get(
         "/api/drugs/check-interactions",
@@ -78,48 +126,164 @@ export const drugService = {
           params: { drug_names: drugNamesStr },
         }
       );
+
+      console.log("✅ Drug interaction result:", response.data);
       return { success: true, data: response.data };
     } catch (error) {
       console.error("❌ Drug interaction check failed:", error);
 
-      // Fallback to simple pattern matching
-      const mockInteractions = [];
-      const hasWarfarin = drugNames.some((drug) =>
-        drug.toLowerCase().includes("warfarin")
-      );
-      const hasNSAID = drugNames.some(
-        (drug) =>
-          drug.toLowerCase().includes("ibuprofen") ||
-          drug.toLowerCase().includes("diclofenac") ||
-          drug.toLowerCase().includes("naproxen")
-      );
-
-      if (hasWarfarin && hasNSAID) {
-        mockInteractions.push({
-          drug_a: "Warfarin",
-          drug_b: "NSAID",
-          severity: "Major",
-          description: "Increased bleeding risk with concurrent use",
-          recommendation:
-            "Avoid concurrent use. Consider paracetamol as alternative.",
-        });
-      }
+      // Enhanced fallback with more interaction patterns
+      const interactions = this.generateMockInteractions(drugNames);
 
       return {
         success: true,
         data: {
           input_drugs: drugNames,
-          interactions_found: mockInteractions.length,
-          interactions: mockInteractions,
+          interactions_found: interactions.length,
+          interactions: interactions,
+          source: "fallback", // Indicate this is fallback data
         },
       };
     }
   },
 
-  // Get drug database stats
+  // Generate mock interactions for fallback (enhanced)
+  generateMockInteractions(drugNames) {
+    const interactions = [];
+    const drugNamesLower = drugNames.map((d) => d.toLowerCase());
+
+    // Define interaction patterns
+    const interactionPatterns = [
+      {
+        drugs: ["warfarin", "ibuprofen"],
+        severity: "Major",
+        description: "Increased bleeding risk with concurrent use",
+        recommendation:
+          "Avoid concurrent use. Consider paracetamol as alternative.",
+      },
+      {
+        drugs: ["warfarin", "aspirin"],
+        severity: "Major",
+        description: "Significantly increased bleeding risk",
+        recommendation: "Avoid concurrent use unless closely monitored.",
+      },
+      {
+        drugs: ["clopidogrel", "omeprazole"],
+        severity: "Moderate",
+        description: "Omeprazole may reduce effectiveness of Clopidogrel",
+        recommendation: "Consider alternative PPI or H2 blocker.",
+      },
+      {
+        drugs: ["metformin", "contrast"],
+        severity: "Major",
+        description: "Risk of lactic acidosis with iodinated contrast",
+        recommendation: "Discontinue metformin before contrast procedures.",
+      },
+      {
+        drugs: ["digoxin", "furosemide"],
+        severity: "Moderate",
+        description: "Increased digoxin levels due to electrolyte changes",
+        recommendation: "Monitor digoxin levels and electrolytes closely.",
+      },
+      {
+        drugs: ["simvastatin", "amlodipine"],
+        severity: "Moderate",
+        description: "Increased statin levels, risk of myopathy",
+        recommendation: "Limit simvastatin dose to 20mg daily.",
+      },
+    ];
+
+    // Check for interactions
+    for (const pattern of interactionPatterns) {
+      const hasAllDrugs = pattern.drugs.every((drug) =>
+        drugNamesLower.some((inputDrug) => inputDrug.includes(drug))
+      );
+
+      if (hasAllDrugs) {
+        // Find the actual drug names that match
+        const matchedDrugs = pattern.drugs.map((patternDrug) => {
+          const matchedInput = drugNames.find((inputDrug) =>
+            inputDrug.toLowerCase().includes(patternDrug)
+          );
+          return matchedInput || patternDrug;
+        });
+
+        interactions.push({
+          drug_a: matchedDrugs[0],
+          drug_b: matchedDrugs[1],
+          severity: pattern.severity,
+          description: pattern.description,
+          recommendation: pattern.recommendation,
+          source: "pattern_matching",
+        });
+      }
+    }
+
+    // Add generic NSAID interactions
+    const nsaids = ["ibuprofen", "diclofenac", "naproxen", "celecoxib"];
+    const hasNSAID = drugNamesLower.some((drug) =>
+      nsaids.some((nsaid) => drug.includes(nsaid))
+    );
+    const hasAnticoagulant = drugNamesLower.some((drug) =>
+      ["warfarin", "heparin", "rivaroxaban", "apixaban"].some((anticoag) =>
+        drug.includes(anticoag)
+      )
+    );
+
+    if (hasNSAID && hasAnticoagulant && !interactions.length) {
+      interactions.push({
+        drug_a: "NSAID",
+        drug_b: "Anticoagulant",
+        severity: "Major",
+        description: "Increased bleeding risk with concurrent use",
+        recommendation:
+          "Avoid concurrent use. Consider paracetamol as alternative.",
+        source: "category_matching",
+      });
+    }
+
+    return interactions;
+  },
+
+  // Get popular/common drugs
+  async getPopularDrugs(limit = 10) {
+    try {
+      console.log("🔍 Getting popular drugs");
+
+      const response = await apiService.api.get("/api/drugs/popular", {
+        params: { limit },
+      });
+
+      return { success: true, data: response.data.drugs || [] };
+    } catch (error) {
+      console.error("❌ Get popular drugs failed:", error);
+
+      // Return common Indonesian medications as fallback
+      const commonDrugs = [
+        { nama_obat: "Paracetamol", nama_obat_internasional: "Acetaminophen" },
+        { nama_obat: "Ibuprofen", nama_obat_internasional: "Ibuprofen" },
+        { nama_obat: "Amoxicillin", nama_obat_internasional: "Amoxicillin" },
+        { nama_obat: "Omeprazole", nama_obat_internasional: "Omeprazole" },
+        { nama_obat: "Metformin", nama_obat_internasional: "Metformin" },
+        { nama_obat: "Amlodipine", nama_obat_internasional: "Amlodipine" },
+        { nama_obat: "Simvastatin", nama_obat_internasional: "Simvastatin" },
+        { nama_obat: "Losartan", nama_obat_internasional: "Losartan" },
+        { nama_obat: "Atorvastatin", nama_obat_internasional: "Atorvastatin" },
+        { nama_obat: "Aspirin", nama_obat_internasional: "Aspirin" },
+      ];
+
+      return { success: true, data: commonDrugs.slice(0, limit) };
+    }
+  },
+
+  // Get drug database statistics
   async getDrugStats() {
     try {
+      console.log("📊 Getting drug statistics");
+
       const response = await apiService.api.get("/api/drugs/stats");
+      console.log("✅ Drug stats:", response.data);
+
       return { success: true, data: response.data };
     } catch (error) {
       console.error("❌ Drug stats failed:", error);
@@ -127,479 +291,240 @@ export const drugService = {
         success: false,
         data: {
           total_drugs: 0,
-          total_interactions: 0,
+          active_drugs: 0,
           sample_drugs: [],
+          database_status: "unavailable",
         },
       };
     }
   },
-};
 
-// Update MedicationInput component untuk gunakan drug database
-// src/components/MedicationInput.jsx - Enhancement with drug autocomplete
-
-import React, { useState, useEffect, useRef } from "react";
-import { Plus, X, Pill, AlertCircle, Clock, Search } from "lucide-react";
-import { drugService } from "../services/drugService";
-
-const MedicationInput = ({
-  medications = [],
-  onMedicationsChange,
-  className = "",
-}) => {
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newMedication, setNewMedication] = useState({
-    name: "",
-    dosage: "",
-    frequency: "",
-    notes: "",
-  });
-  const [errors, setErrors] = useState({});
-
-  // Drug autocomplete state
-  const [drugSuggestions, setDrugSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const suggestionTimeoutRef = useRef(null);
-
-  // Common medications for quick add (enhanced dengan database)
-  const [commonMedications, setCommonMedications] = useState([
-    { name: "Paracetamol", dosage: "500mg", frequency: "3x daily" },
-    { name: "Ibuprofen", dosage: "400mg", frequency: "As needed" },
-    { name: "Amoxicillin", dosage: "500mg", frequency: "3x daily" },
-    { name: "Omeprazole", dosage: "20mg", frequency: "Once daily" },
-    { name: "Metformin", dosage: "500mg", frequency: "2x daily" },
-    { name: "Amlodipine", dosage: "5mg", frequency: "Once daily" },
-  ]);
-
-  // Load drug stats on component mount
-  useEffect(() => {
-    loadDrugStats();
-  }, []);
-
-  const loadDrugStats = async () => {
+  // Advanced drug search with filters
+  async searchDrugsAdvanced(options = {}) {
     try {
-      const result = await drugService.getDrugStats();
-      if (result.success && result.data.sample_drugs.length > 0) {
-        // Update common medications dengan sample dari database
-        const dbSamples = result.data.sample_drugs.map((drug) => ({
-          name: drug.nama_obat_internasional,
-          dosage: "500mg", // Default dosage
-          frequency: "2x daily", // Default frequency
-        }));
-        setCommonMedications((prev) => [...dbSamples, ...prev].slice(0, 6));
-      }
+      const {
+        query = "",
+        limit = 10,
+        includeInactive = false,
+        searchInternational = true,
+      } = options;
+
+      console.log("🔍 Advanced drug search:", options);
+
+      const params = {
+        q: query.trim(),
+        limit,
+        include_inactive: includeInactive,
+        search_international: searchInternational,
+      };
+
+      const response = await apiService.api.get("/api/drugs/search/advanced", {
+        params,
+      });
+
+      return {
+        success: true,
+        data: {
+          drugs: response.data.drugs || [],
+          total: response.data.total || 0,
+          query_time: response.data.query_time || 0,
+        },
+      };
     } catch (error) {
-      console.error("Error loading drug stats:", error);
+      console.error("❌ Advanced drug search failed:", error);
+
+      // Fallback to basic search
+      return await this.searchDrugs(options.query, options.limit);
     }
-  };
+  },
 
-  // Drug name autocomplete
-  const handleDrugNameChange = async (value) => {
-    setNewMedication((prev) => ({ ...prev, name: value }));
+  // Batch validate multiple drugs
+  async validateMultipleDrugs(drugNames = []) {
+    try {
+      console.log("🔍 Batch validating drugs:", drugNames);
 
-    // Clear error when user starts typing
-    if (errors.name) {
-      setErrors((prev) => ({ ...prev, name: "" }));
+      const results = await Promise.all(
+        drugNames.map(async (drugName) => {
+          const validation = await this.validateDrug(drugName);
+          return {
+            drugName,
+            ...validation,
+          };
+        })
+      );
+
+      const validDrugs = results.filter((r) => r.isValid);
+      const invalidDrugs = results.filter((r) => !r.isValid);
+
+      return {
+        success: true,
+        data: {
+          total: drugNames.length,
+          valid: validDrugs.length,
+          invalid: invalidDrugs.length,
+          results: results,
+          validDrugs: validDrugs,
+          invalidDrugs: invalidDrugs,
+        },
+      };
+    } catch (error) {
+      console.error("❌ Batch drug validation failed:", error);
+      return { success: false, data: null };
+    }
+  },
+
+  // Get drug interactions with patient conditions
+  async checkDrugConditionInteractions(drugNames = [], icdCodes = []) {
+    try {
+      console.log("🔍 Checking drug-condition interactions:", {
+        drugNames,
+        icdCodes,
+      });
+
+      const params = {
+        drugs: drugNames.join(","),
+        conditions: icdCodes.join(","),
+      };
+
+      const response = await apiService.api.get("/api/analyze-interactions", {
+        params,
+      });
+
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error("❌ Drug-condition interaction check failed:", error);
+
+      // Enhanced fallback with condition-specific warnings
+      const warnings = this.generateConditionWarnings(drugNames, icdCodes);
+
+      return {
+        success: true,
+        data: {
+          drug_interactions: this.generateMockInteractions(drugNames),
+          condition_warnings: warnings,
+          analysis_type: "fallback",
+        },
+      };
+    }
+  },
+
+  // Generate condition-specific warnings
+  generateConditionWarnings(drugNames, icdCodes) {
+    const warnings = [];
+    const drugNamesLower = drugNames.map((d) => d.toLowerCase());
+
+    // Define drug-condition contraindications
+    const contraindications = [
+      {
+        drugs: ["metformin"],
+        conditions: ["N18", "N19"], // Kidney disease
+        severity: "Major",
+        warning:
+          "Metformin contraindicated in severe kidney disease due to lactic acidosis risk",
+      },
+      {
+        drugs: ["nsaid", "ibuprofen", "diclofenac"],
+        conditions: ["N18", "I50"], // Kidney disease, Heart failure
+        severity: "Major",
+        warning: "NSAIDs may worsen kidney function and heart failure",
+      },
+      {
+        drugs: ["warfarin"],
+        conditions: ["K92.2"], // GI bleeding
+        severity: "Major",
+        warning: "Anticoagulants contraindicated in active GI bleeding",
+      },
+      {
+        drugs: ["aspirin"],
+        conditions: ["J45"], // Asthma
+        severity: "Moderate",
+        warning: "Aspirin may trigger bronchospasm in aspirin-sensitive asthma",
+      },
+    ];
+
+    // Check for contraindications
+    for (const contra of contraindications) {
+      const hasDrug = contra.drugs.some((drug) =>
+        drugNamesLower.some((inputDrug) => inputDrug.includes(drug))
+      );
+
+      const hasCondition = contra.conditions.some((condition) =>
+        icdCodes.some((icd) => icd.startsWith(condition))
+      );
+
+      if (hasDrug && hasCondition) {
+        warnings.push({
+          type: "contraindication",
+          severity: contra.severity,
+          message: contra.warning,
+          drugs: contra.drugs,
+          conditions: contra.conditions,
+        });
+      }
     }
 
-    // Autocomplete
-    if (value.length >= 2) {
-      setIsLoadingSuggestions(true);
+    return warnings;
+  },
 
-      // Clear previous timeout
-      if (suggestionTimeoutRef.current) {
-        clearTimeout(suggestionTimeoutRef.current);
+  // Format drug name for display
+  formatDrugName(drug) {
+    if (!drug) return "";
+
+    if (typeof drug === "string") {
+      return drug;
+    }
+
+    // If drug object has both names, show both
+    if (drug.nama_obat && drug.nama_obat_internasional) {
+      if (
+        drug.nama_obat.toLowerCase() ===
+        drug.nama_obat_internasional.toLowerCase()
+      ) {
+        return drug.nama_obat;
+      }
+      return `${drug.nama_obat} (${drug.nama_obat_internasional})`;
+    }
+
+    return drug.nama_obat || drug.nama_obat_internasional || "Unknown drug";
+  },
+
+  // Get drug suggestions based on partial input
+  async getDrugSuggestions(partialName, limit = 5) {
+    try {
+      if (!partialName || partialName.length < 2) {
+        return { success: true, data: [] };
       }
 
-      // Set new timeout for debouncing
-      suggestionTimeoutRef.current = setTimeout(async () => {
-        try {
-          const suggestions = await drugService.autocompleteDrugs(value, 5);
-          setDrugSuggestions(suggestions);
-          setShowSuggestions(true);
-        } catch (error) {
-          console.error("Autocomplete error:", error);
-          setDrugSuggestions([]);
-        } finally {
-          setIsLoadingSuggestions(false);
-        }
-      }, 300);
-    } else {
-      setShowSuggestions(false);
-      setDrugSuggestions([]);
+      const result = await this.searchDrugs(partialName, limit);
+
+      if (result.success) {
+        // Sort by relevance (exact matches first)
+        const suggestions = result.data.sort((a, b) => {
+          const aName = a.nama_obat.toLowerCase();
+          const bName = b.nama_obat.toLowerCase();
+          const searchTerm = partialName.toLowerCase();
+
+          // Exact matches first
+          if (aName === searchTerm) return -1;
+          if (bName === searchTerm) return 1;
+
+          // Starts with search term
+          if (aName.startsWith(searchTerm) && !bName.startsWith(searchTerm))
+            return -1;
+          if (bName.startsWith(searchTerm) && !aName.startsWith(searchTerm))
+            return 1;
+
+          // Alphabetical order
+          return aName.localeCompare(bName);
+        });
+
+        return { success: true, data: suggestions };
+      }
+
+      return result;
+    } catch (error) {
+      console.error("❌ Get drug suggestions failed:", error);
+      return { success: false, data: [] };
     }
-  };
-
-  const selectDrugSuggestion = (suggestion) => {
-    setNewMedication((prev) => ({ ...prev, name: suggestion }));
-    setShowSuggestions(false);
-    setDrugSuggestions([]);
-  };
-
-  // Rest of the component remains the same...
-  const validateMedication = (med) => {
-    const newErrors = {};
-
-    if (!med.name.trim()) {
-      newErrors.name = "Medication name is required";
-    }
-
-    if (!med.dosage.trim()) {
-      newErrors.dosage = "Dosage is required";
-    }
-
-    if (!med.frequency.trim()) {
-      newErrors.frequency = "Frequency is required";
-    }
-
-    // Check for duplicates
-    const isDuplicate = medications.some(
-      (existing) => existing.name.toLowerCase() === med.name.toLowerCase()
-    );
-
-    if (isDuplicate) {
-      newErrors.name = "This medication is already added";
-    }
-
-    return newErrors;
-  };
-
-  const handleAddMedication = () => {
-    const validationErrors = validateMedication(newMedication);
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
-    const medicationToAdd = {
-      id: Date.now().toString(),
-      name: newMedication.name.trim(),
-      dosage: newMedication.dosage.trim(),
-      frequency: newMedication.frequency.trim(),
-      notes: newMedication.notes.trim(),
-      addedAt: new Date().toISOString(),
-    };
-
-    onMedicationsChange([...medications, medicationToAdd]);
-
-    // Reset form
-    setNewMedication({ name: "", dosage: "", frequency: "", notes: "" });
-    setErrors({});
-    setShowAddForm(false);
-    setShowSuggestions(false);
-  };
-
-  // Rest of component methods remain the same...
-  const handleQuickAdd = (commonMed) => {
-    const medicationToAdd = {
-      id: Date.now().toString(),
-      ...commonMed,
-      notes: "",
-      addedAt: new Date().toISOString(),
-    };
-
-    const isDuplicate = medications.some(
-      (existing) => existing.name.toLowerCase() === commonMed.name.toLowerCase()
-    );
-
-    if (!isDuplicate) {
-      onMedicationsChange([...medications, medicationToAdd]);
-    }
-  };
-
-  const handleRemoveMedication = (medicationId) => {
-    const updatedMedications = medications.filter(
-      (med) => med.id !== medicationId
-    );
-    onMedicationsChange(updatedMedications);
-  };
-
-  return (
-    <div className={`card ${className}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <Pill className="w-5 h-5 text-primary-600 mr-2" />
-          <h2 className="text-lg font-semibold text-gray-900">
-            New Medications
-          </h2>
-        </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="btn-primary flex items-center text-sm"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Add Medication
-        </button>
-      </div>
-
-      {/* Quick Add Section - Enhanced */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">
-          Quick Add (From Database)
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {commonMedications.map((med, index) => (
-            <button
-              key={index}
-              onClick={() => handleQuickAdd(med)}
-              disabled={medications.some(
-                (existing) =>
-                  existing.name.toLowerCase() === med.name.toLowerCase()
-              )}
-              className="p-2 text-left border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="text-sm font-medium text-gray-900">
-                {med.name}
-              </div>
-              <div className="text-xs text-gray-500">
-                {med.dosage} • {med.frequency}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Add Medication Form - Enhanced with Autocomplete */}
-      {showAddForm && (
-        <div className="mb-6 p-4 border-2 border-primary-200 rounded-lg bg-primary-50">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-primary-900">Add New Medication</h3>
-            <button
-              onClick={() => {
-                setShowAddForm(false);
-                setNewMedication({
-                  name: "",
-                  dosage: "",
-                  frequency: "",
-                  notes: "",
-                });
-                setErrors({});
-                setShowSuggestions(false);
-              }}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Medication Name with Autocomplete */}
-            <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Medication Name <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={newMedication.name}
-                  onChange={(e) => handleDrugNameChange(e.target.value)}
-                  placeholder="e.g., Paracetamol"
-                  className={`input-field pr-8 ${
-                    errors.name ? "border-red-300 focus:ring-red-500" : ""
-                  }`}
-                />
-                <div className="absolute right-2 top-2">
-                  {isLoadingSuggestions ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600"></div>
-                  ) : (
-                    <Search className="w-4 h-4 text-gray-400" />
-                  )}
-                </div>
-              </div>
-
-              {/* Drug Suggestions Dropdown */}
-              {showSuggestions && drugSuggestions.length > 0 && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                  {drugSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => selectDrugSuggestion(suggestion)}
-                      className="w-full px-3 py-2 text-left hover:bg-primary-50 focus:bg-primary-50 focus:outline-none text-sm"
-                    >
-                      {suggestion}
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {errors.name && (
-                <p className="mt-1 text-xs text-red-600 flex items-center">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  {errors.name}
-                </p>
-              )}
-            </div>
-
-            {/* Rest of the form remains the same... */}
-            {/* Dosage */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Dosage <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={newMedication.dosage}
-                onChange={(e) =>
-                  setNewMedication((prev) => ({
-                    ...prev,
-                    dosage: e.target.value,
-                  }))
-                }
-                placeholder="e.g., 500mg"
-                className={`input-field ${
-                  errors.dosage ? "border-red-300 focus:ring-red-500" : ""
-                }`}
-              />
-              {errors.dosage && (
-                <p className="mt-1 text-xs text-red-600 flex items-center">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  {errors.dosage}
-                </p>
-              )}
-            </div>
-
-            {/* Frequency */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Frequency <span className="text-red-500">*</span>
-              </label>
-              <select
-                value={newMedication.frequency}
-                onChange={(e) =>
-                  setNewMedication((prev) => ({
-                    ...prev,
-                    frequency: e.target.value,
-                  }))
-                }
-                className={`input-field ${
-                  errors.frequency ? "border-red-300 focus:ring-red-500" : ""
-                }`}
-              >
-                <option value="">Select frequency...</option>
-                <option value="Once daily">Once daily</option>
-                <option value="2x daily">2x daily</option>
-                <option value="3x daily">3x daily</option>
-                <option value="4x daily">4x daily</option>
-                <option value="As needed">As needed</option>
-                <option value="Before meals">Before meals</option>
-                <option value="After meals">After meals</option>
-              </select>
-              {errors.frequency && (
-                <p className="mt-1 text-xs text-red-600 flex items-center">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  {errors.frequency}
-                </p>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Notes (Optional)
-              </label>
-              <input
-                type="text"
-                value={newMedication.notes}
-                onChange={(e) =>
-                  setNewMedication((prev) => ({
-                    ...prev,
-                    notes: e.target.value,
-                  }))
-                }
-                placeholder="e.g., Take with food"
-                className="input-field"
-              />
-            </div>
-          </div>
-
-          <div className="flex justify-end mt-4 space-x-2">
-            <button
-              onClick={() => {
-                setShowAddForm(false);
-                setNewMedication({
-                  name: "",
-                  dosage: "",
-                  frequency: "",
-                  notes: "",
-                });
-                setErrors({});
-                setShowSuggestions(false);
-              }}
-              className="btn-secondary"
-            >
-              Cancel
-            </button>
-            <button onClick={handleAddMedication} className="btn-primary">
-              Add Medication
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Added Medications List */}
-      {medications.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-3">
-            Added Medications ({medications.length})
-          </h3>
-          <div className="space-y-3">
-            {medications.map((medication) => (
-              <div
-                key={medication.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center mb-2">
-                    <Pill className="w-4 h-4 text-primary-600 mr-2" />
-                    <span className="font-medium text-gray-900">
-                      {medication.name}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <span className="font-medium mr-1">Dosage:</span>
-                      {medication.dosage}
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="w-3 h-3 mr-1" />
-                      <span className="font-medium mr-1">Frequency:</span>
-                      {medication.frequency}
-                    </div>
-                    {medication.notes && (
-                      <div className="col-span-1 md:col-span-3">
-                        <span className="font-medium mr-1">Notes:</span>
-                        {medication.notes}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleRemoveMedication(medication.id)}
-                  className="ml-4 p-2 text-gray-400 hover:text-red-500 focus:text-red-500 focus:outline-none"
-                  title="Remove medication"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Empty State */}
-      {medications.length === 0 && (
-        <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
-          <Pill className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-          <p className="text-sm text-gray-500">No medications added</p>
-          <p className="text-xs text-gray-400">
-            Add medications to analyze potential interactions
-          </p>
-        </div>
-      )}
-    </div>
-  );
+  },
 };
-
-export default MedicationInput;

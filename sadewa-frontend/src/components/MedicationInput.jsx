@@ -1,6 +1,14 @@
-// src/components/MedicationInput.jsx
-import React, { useState } from "react";
-import { Plus, X, Pill, AlertCircle, Clock } from "lucide-react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import {
+  Plus,
+  X,
+  Pill,
+  AlertCircle,
+  Clock,
+  Search,
+  Loader2,
+} from "lucide-react";
+import { drugService } from "../services/drugService";
 
 const MedicationInput = ({
   medications = [],
@@ -16,240 +24,452 @@ const MedicationInput = ({
   });
   const [errors, setErrors] = useState({});
 
-  // Common medications for quick add
-  const commonMedications = [
+  // Drug autocomplete state
+  const [drugSuggestions, setDrugSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const suggestionTimeoutRef = useRef(null);
+  const inputRef = useRef(null);
+  const suggestionsRef = useRef(null);
+
+  // Common medications from database (akan di-load dinamis)
+  const [commonMedications, setCommonMedications] = useState([
     { name: "Paracetamol", dosage: "500mg", frequency: "3x daily" },
     { name: "Ibuprofen", dosage: "400mg", frequency: "As needed" },
     { name: "Amoxicillin", dosage: "500mg", frequency: "3x daily" },
     { name: "Omeprazole", dosage: "20mg", frequency: "Once daily" },
     { name: "Metformin", dosage: "500mg", frequency: "2x daily" },
     { name: "Amlodipine", dosage: "5mg", frequency: "Once daily" },
-  ];
+  ]);
 
-  const validateMedication = (med) => {
-    const newErrors = {};
+  // Load popular drugs from database on mount
+  useEffect(() => {
+    loadPopularDrugs();
+  }, []);
 
-    if (!med.name.trim()) {
-      newErrors.name = "Medication name is required";
+  const loadPopularDrugs = async () => {
+    try {
+      const result = await drugService.searchDrugs("paracetamol", 1);
+      if (result.success && result.data.length > 0) {
+        // Update common medications with real database data
+        const popularQueries = [
+          "paracetamol",
+          "ibuprofen",
+          "amoxicillin",
+          "omeprazole",
+          "metformin",
+          "amlodipine",
+        ];
+
+        const popularDrugs = [];
+        for (const query of popularQueries) {
+          const searchResult = await drugService.searchDrugs(query, 1);
+          if (searchResult.success && searchResult.data.length > 0) {
+            const drug = searchResult.data[0];
+            popularDrugs.push({
+              name: drug.nama_obat,
+              dosage: "As prescribed",
+              frequency: "As prescribed",
+            });
+          }
+        }
+
+        if (popularDrugs.length > 0) {
+          setCommonMedications(popularDrugs);
+        }
+      }
+    } catch (error) {
+      console.log("Using default common medications");
     }
-
-    if (!med.dosage.trim()) {
-      newErrors.dosage = "Dosage is required";
-    }
-
-    if (!med.frequency.trim()) {
-      newErrors.frequency = "Frequency is required";
-    }
-
-    // Check for duplicates
-    const isDuplicate = medications.some(
-      (existing) => existing.name.toLowerCase() === med.name.toLowerCase()
-    );
-
-    if (isDuplicate) {
-      newErrors.name = "This medication is already added";
-    }
-
-    return newErrors;
   };
 
-  const handleAddMedication = () => {
-    const validationErrors = validateMedication(newMedication);
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
+  // Debounced drug search
+  const debouncedDrugSearch = useCallback(async (query) => {
+    if (!query || query.length < 2) {
+      setDrugSuggestions([]);
+      setShowSuggestions(false);
       return;
     }
 
-    const medicationToAdd = {
-      id: Date.now().toString(),
-      name: newMedication.name.trim(),
-      dosage: newMedication.dosage.trim(),
-      frequency: newMedication.frequency.trim(),
-      notes: newMedication.notes.trim(),
-      addedAt: new Date().toISOString(),
-    };
+    setIsLoadingSuggestions(true);
 
-    onMedicationsChange([...medications, medicationToAdd]);
+    try {
+      const result = await drugService.searchDrugs(query, 8);
+      if (result.success) {
+        setDrugSuggestions(result.data);
+        setShowSuggestions(true);
+        setSelectedSuggestionIndex(-1);
+      }
+    } catch (error) {
+      console.error("Drug search error:", error);
+      setDrugSuggestions([]);
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  }, []);
 
-    // Reset form
-    setNewMedication({ name: "", dosage: "", frequency: "", notes: "" });
-    setErrors({});
-    setShowAddForm(false);
+  // Handle input change with debouncing
+  const handleDrugNameChange = (value) => {
+    setNewMedication((prev) => ({ ...prev, name: value }));
+
+    // Clear previous timeout
+    if (suggestionTimeoutRef.current) {
+      clearTimeout(suggestionTimeoutRef.current);
+    }
+
+    // Clear errors
+    if (errors.name) {
+      setErrors((prev) => ({ ...prev, name: "" }));
+    }
+
+    // Set new timeout for search
+    suggestionTimeoutRef.current = setTimeout(() => {
+      debouncedDrugSearch(value);
+    }, 300);
   };
 
-  const handleQuickAdd = (commonMed) => {
+  // Handle suggestion selection
+  const selectSuggestion = (drug) => {
+    setNewMedication((prev) => ({
+      ...prev,
+      name: drug.nama_obat,
+    }));
+    setShowSuggestions(false);
+    setDrugSuggestions([]);
+    setSelectedSuggestionIndex(-1);
+
+    // Focus on next input
+    setTimeout(() => {
+      const dosageInput = document.querySelector(
+        'input[placeholder="e.g., 500mg"]'
+      );
+      if (dosageInput) dosageInput.focus();
+    }, 100);
+  };
+
+  // Handle keyboard navigation in suggestions
+  const handleKeyDown = (e) => {
+    if (!showSuggestions || drugSuggestions.length === 0) return;
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) =>
+          prev < drugSuggestions.length - 1 ? prev + 1 : prev
+        );
+        break;
+
+      case "ArrowUp":
+        e.preventDefault();
+        setSelectedSuggestionIndex((prev) => (prev > 0 ? prev - 1 : -1));
+        break;
+
+      case "Enter":
+        e.preventDefault();
+        if (selectedSuggestionIndex >= 0) {
+          selectSuggestion(drugSuggestions[selectedSuggestionIndex]);
+        }
+        break;
+
+      case "Escape":
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+        break;
+    }
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target) &&
+        !inputRef.current?.contains(event.target)
+      ) {
+        setShowSuggestions(false);
+        setSelectedSuggestionIndex(-1);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!newMedication.name.trim()) {
+      newErrors.name = "Nama obat harus diisi";
+    }
+
+    if (!newMedication.dosage.trim()) {
+      newErrors.dosage = "Dosis harus diisi";
+    }
+
+    if (!newMedication.frequency.trim()) {
+      newErrors.frequency = "Frekuensi harus diisi";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const addMedication = async () => {
+    if (!validateForm()) return;
+
+    // Verify drug exists in database
+    try {
+      const searchResult = await drugService.searchDrugs(newMedication.name, 1);
+      let finalDrugName = newMedication.name;
+
+      if (searchResult.success && searchResult.data.length > 0) {
+        // Use exact name from database
+        finalDrugName = searchResult.data[0].nama_obat;
+      }
+
+      const medicationToAdd = {
+        id: Date.now(),
+        name: finalDrugName,
+        dosage: newMedication.dosage.trim(),
+        frequency: newMedication.frequency.trim(),
+        notes: newMedication.notes.trim(),
+        addedAt: new Date().toISOString(),
+      };
+
+      const updatedMedications = [...medications, medicationToAdd];
+      onMedicationsChange(updatedMedications);
+
+      // Reset form
+      setNewMedication({ name: "", dosage: "", frequency: "", notes: "" });
+      setShowAddForm(false);
+      setErrors({});
+    } catch (error) {
+      console.error("Error adding medication:", error);
+      // Still add the medication even if verification fails
+      const medicationToAdd = {
+        id: Date.now(),
+        name: newMedication.name.trim(),
+        dosage: newMedication.dosage.trim(),
+        frequency: newMedication.frequency.trim(),
+        notes: newMedication.notes.trim(),
+        addedAt: new Date().toISOString(),
+      };
+
+      const updatedMedications = [...medications, medicationToAdd];
+      onMedicationsChange(updatedMedications);
+
+      setNewMedication({ name: "", dosage: "", frequency: "", notes: "" });
+      setShowAddForm(false);
+      setErrors({});
+    }
+  };
+
+  const addCommonMedication = (medication) => {
     const medicationToAdd = {
-      id: Date.now().toString(),
-      ...commonMed,
+      id: Date.now(),
+      name: medication.name,
+      dosage: medication.dosage,
+      frequency: medication.frequency,
       notes: "",
       addedAt: new Date().toISOString(),
     };
 
-    // Check for duplicates
-    const isDuplicate = medications.some(
-      (existing) => existing.name.toLowerCase() === commonMed.name.toLowerCase()
-    );
-
-    if (!isDuplicate) {
-      onMedicationsChange([...medications, medicationToAdd]);
-    }
+    const updatedMedications = [...medications, medicationToAdd];
+    onMedicationsChange(updatedMedications);
   };
 
-  const handleRemoveMedication = (medicationId) => {
+  const removeMedication = (medicationId) => {
     const updatedMedications = medications.filter(
       (med) => med.id !== medicationId
     );
     onMedicationsChange(updatedMedications);
   };
 
-  const handleInputChange = (field, value) => {
-    setNewMedication((prev) => ({ ...prev, [field]: value }));
-
-    // Clear error when user starts typing
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: "" }));
-    }
+  const cancelAdd = () => {
+    setNewMedication({ name: "", dosage: "", frequency: "", notes: "" });
+    setShowAddForm(false);
+    setErrors({});
+    setShowSuggestions(false);
   };
 
   return (
-    <div className={`card ${className}`}>
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center">
-          <Pill className="w-5 h-5 text-primary-600 mr-2" />
-          <h2 className="text-lg font-semibold text-gray-900">
-            New Medications
-          </h2>
-        </div>
-        <button
-          onClick={() => setShowAddForm(true)}
-          className="btn-primary flex items-center text-sm"
-        >
-          <Plus className="w-4 h-4 mr-1" />
-          Add Medication
-        </button>
-      </div>
-
-      {/* Quick Add Section */}
-      <div className="mb-6">
-        <h3 className="text-sm font-medium text-gray-700 mb-2">
-          Quick Add (Common Medications)
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {commonMedications.map((med, index) => (
-            <button
-              key={index}
-              onClick={() => handleQuickAdd(med)}
-              disabled={medications.some(
-                (existing) =>
-                  existing.name.toLowerCase() === med.name.toLowerCase()
-              )}
-              className="p-2 text-left border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <div className="text-sm font-medium text-gray-900">
-                {med.name}
-              </div>
-              <div className="text-xs text-gray-500">
-                {med.dosage} • {med.frequency}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Add Medication Form */}
-      {showAddForm && (
-        <div className="mb-6 p-4 border-2 border-primary-200 rounded-lg bg-primary-50">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-medium text-primary-900">Add New Medication</h3>
-            <button
-              onClick={() => {
-                setShowAddForm(false);
-                setNewMedication({
-                  name: "",
-                  dosage: "",
-                  frequency: "",
-                  notes: "",
-                });
-                setErrors({});
-              }}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-5 h-5" />
-            </button>
+    <div
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-green-100 rounded-lg">
+            <Pill className="h-5 w-5 text-green-600" />
           </div>
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Current Medications
+            </h3>
+            <p className="text-sm text-gray-500">
+              {medications.length} medication
+              {medications.length !== 1 ? "s" : ""} added
+            </p>
+          </div>
+        </div>
+
+        {!showAddForm && (
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="h-4 w-4" />
+            Add Medication
+          </button>
+        )}
+      </div>
+
+      {/* Quick Add Common Medications */}
+      {!showAddForm && medications.length === 0 && (
+        <div className="mb-6">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">
+            Quick Add Common Medications:
+          </h4>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            {commonMedications.slice(0, 6).map((med, index) => (
+              <button
+                key={index}
+                onClick={() => addCommonMedication(med)}
+                className="text-left p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200"
+              >
+                <div className="font-medium text-gray-900 text-sm">
+                  {med.name}
+                </div>
+                <div className="text-xs text-gray-600">
+                  {med.dosage} - {med.frequency}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add Form */}
+      {showAddForm && (
+        <div className="mb-6 p-4 bg-gray-50 rounded-lg border">
+          <h4 className="text-md font-semibold text-gray-900 mb-4">
+            Add New Medication
+          </h4>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Medication Name */}
-            <div>
+            {/* Drug Name with Autocomplete */}
+            <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Medication Name <span className="text-red-500">*</span>
+                Medication Name *
               </label>
-              <input
-                type="text"
-                value={newMedication.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                placeholder="e.g., Paracetamol"
-                className={`input-field ${
-                  errors.name ? "border-red-300 focus:ring-red-500" : ""
-                }`}
-              />
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={newMedication.name}
+                  onChange={(e) => handleDrugNameChange(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type to search medications..."
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                    errors.name ? "border-red-300" : "border-gray-300"
+                  }`}
+                />
+                {isLoadingSuggestions && (
+                  <Loader2 className="absolute right-3 top-2.5 h-4 w-4 text-gray-400 animate-spin" />
+                )}
+              </div>
+
               {errors.name && (
-                <p className="mt-1 text-xs text-red-600 flex items-center">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  {errors.name}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+              )}
+
+              {/* Suggestions Dropdown */}
+              {showSuggestions && drugSuggestions.length > 0 && (
+                <div
+                  ref={suggestionsRef}
+                  className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                >
+                  {drugSuggestions.map((drug, index) => (
+                    <button
+                      key={drug.id}
+                      onClick={() => selectSuggestion(drug)}
+                      className={`w-full text-left px-3 py-2 hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+                        index === selectedSuggestionIndex
+                          ? "bg-green-50 text-green-900"
+                          : ""
+                      }`}
+                    >
+                      <div className="font-medium text-sm">
+                        {drug.nama_obat}
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {drug.nama_obat_internasional}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               )}
             </div>
 
             {/* Dosage */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Dosage <span className="text-red-500">*</span>
+                Dosage *
               </label>
               <input
                 type="text"
                 value={newMedication.dosage}
-                onChange={(e) => handleInputChange("dosage", e.target.value)}
+                onChange={(e) =>
+                  setNewMedication((prev) => ({
+                    ...prev,
+                    dosage: e.target.value,
+                  }))
+                }
                 placeholder="e.g., 500mg"
-                className={`input-field ${
-                  errors.dosage ? "border-red-300 focus:ring-red-500" : ""
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                  errors.dosage ? "border-red-300" : "border-gray-300"
                 }`}
               />
               {errors.dosage && (
-                <p className="mt-1 text-xs text-red-600 flex items-center">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  {errors.dosage}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{errors.dosage}</p>
               )}
             </div>
 
             {/* Frequency */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Frequency <span className="text-red-500">*</span>
+                Frequency *
               </label>
               <select
                 value={newMedication.frequency}
-                onChange={(e) => handleInputChange("frequency", e.target.value)}
-                className={`input-field ${
-                  errors.frequency ? "border-red-300 focus:ring-red-500" : ""
+                onChange={(e) =>
+                  setNewMedication((prev) => ({
+                    ...prev,
+                    frequency: e.target.value,
+                  }))
+                }
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                  errors.frequency ? "border-red-300" : "border-gray-300"
                 }`}
               >
-                <option value="">Select frequency...</option>
+                <option value="">Select frequency</option>
                 <option value="Once daily">Once daily</option>
-                <option value="2x daily">2x daily</option>
-                <option value="3x daily">3x daily</option>
-                <option value="4x daily">4x daily</option>
-                <option value="As needed">As needed</option>
-                <option value="Before meals">Before meals</option>
-                <option value="After meals">After meals</option>
+                <option value="Twice daily">Twice daily (2x daily)</option>
+                <option value="Three times daily">
+                  Three times daily (3x daily)
+                </option>
+                <option value="Four times daily">
+                  Four times daily (4x daily)
+                </option>
+                <option value="As needed">As needed (PRN)</option>
+                <option value="Every 4 hours">Every 4 hours</option>
+                <option value="Every 6 hours">Every 6 hours</option>
+                <option value="Every 8 hours">Every 8 hours</option>
+                <option value="Every 12 hours">Every 12 hours</option>
               </select>
               {errors.frequency && (
-                <p className="mt-1 text-xs text-red-600 flex items-center">
-                  <AlertCircle className="w-3 h-3 mr-1" />
-                  {errors.frequency}
-                </p>
+                <p className="mt-1 text-sm text-red-600">{errors.frequency}</p>
               )}
             </div>
 
@@ -261,93 +481,90 @@ const MedicationInput = ({
               <input
                 type="text"
                 value={newMedication.notes}
-                onChange={(e) => handleInputChange("notes", e.target.value)}
+                onChange={(e) =>
+                  setNewMedication((prev) => ({
+                    ...prev,
+                    notes: e.target.value,
+                  }))
+                }
                 placeholder="e.g., Take with food"
-                className="input-field"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
           </div>
 
-          <div className="flex justify-end mt-4 space-x-2">
+          {/* Form Actions */}
+          <div className="flex justify-end gap-3 mt-4">
             <button
-              onClick={() => {
-                setShowAddForm(false);
-                setNewMedication({
-                  name: "",
-                  dosage: "",
-                  frequency: "",
-                  notes: "",
-                });
-                setErrors({});
-              }}
-              className="btn-secondary"
+              onClick={cancelAdd}
+              className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
             >
               Cancel
             </button>
-            <button onClick={handleAddMedication} className="btn-primary">
+            <button
+              onClick={addMedication}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
               Add Medication
             </button>
           </div>
         </div>
       )}
 
-      {/* Added Medications List */}
+      {/* Current Medications List */}
       {medications.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium text-gray-700 mb-3">
-            Added Medications ({medications.length})
-          </h3>
-          <div className="space-y-3">
-            {medications.map((medication) => (
-              <div
-                key={medication.id}
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center mb-2">
-                    <Pill className="w-4 h-4 text-primary-600 mr-2" />
-                    <span className="font-medium text-gray-900">
-                      {medication.name}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
-                    <div className="flex items-center">
-                      <span className="font-medium mr-1">Dosage:</span>
-                      {medication.dosage}
-                    </div>
-                    <div className="flex items-center">
-                      <Clock className="w-3 h-3 mr-1" />
-                      <span className="font-medium mr-1">Frequency:</span>
-                      {medication.frequency}
-                    </div>
-                    {medication.notes && (
-                      <div className="col-span-1 md:col-span-3">
-                        <span className="font-medium mr-1">Notes:</span>
-                        {medication.notes}
-                      </div>
-                    )}
-                  </div>
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-gray-700 mb-3">
+            Current Medications ({medications.length}):
+          </h4>
+
+          {medications.map((medication) => (
+            <div
+              key={medication.id}
+              className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-lg"
+            >
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h5 className="font-semibold text-gray-900">
+                    {medication.name}
+                  </h5>
+                  <span className="text-sm text-green-600 bg-green-100 px-2 py-0.5 rounded">
+                    {medication.dosage}
+                  </span>
                 </div>
-                <button
-                  onClick={() => handleRemoveMedication(medication.id)}
-                  className="ml-4 p-2 text-gray-400 hover:text-red-500 focus:text-red-500 focus:outline-none"
-                  title="Remove medication"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {medication.frequency}
+                  </div>
+                  {medication.notes && (
+                    <div className="text-gray-500">
+                      Note: {medication.notes}
+                    </div>
+                  )}
+                </div>
               </div>
-            ))}
-          </div>
+
+              <button
+                onClick={() => removeMedication(medication.id)}
+                className="p-2 text-red-500 hover:bg-red-100 rounded-lg transition-colors"
+                title="Remove medication"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
         </div>
       )}
 
       {/* Empty State */}
-      {medications.length === 0 && (
-        <div className="p-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 text-center">
-          <Pill className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-          <p className="text-sm text-gray-500">No medications added</p>
-          <p className="text-xs text-gray-400">
-            Add medications to analyze potential interactions
+      {medications.length === 0 && !showAddForm && (
+        <div className="text-center py-12 text-gray-500">
+          <Pill className="h-12 w-12 mx-auto text-gray-300 mb-3" />
+          <p className="text-lg font-medium mb-2">No medications added yet</p>
+          <p className="text-sm">
+            Add current medications to check for interactions and
+            contraindications
           </p>
         </div>
       )}
