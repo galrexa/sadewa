@@ -1,39 +1,47 @@
 """
-Enhanced interactions router untuk SADEWA - DAY 2
-Multi-layered clinical decision support dengan performance optimization
+Enhanced interactions router for SADEWA - DAY 2.
+
+Provides multi-layered clinical decision support with performance optimization
+through in-memory caching and asynchronous AI analysis.
 """
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.responses import JSONResponse
-from typing import List, Dict, Optional
+# Standard library imports
+import asyncio
+import hashlib
 import json
 import os
 import time
-import hashlib
-import asyncio
 from datetime import datetime, timedelta
+from typing import Dict, List, Optional
 
+# Third-party imports
+from fastapi import APIRouter, HTTPException
+
+# Local application imports
 from app.schemas import InteractionRequest, InteractionResponse, GroqTestResponse
 from services.groq_service import groq_service
 
 router = APIRouter()
 
-# Simple in-memory cache untuk optimization (production: gunakan Redis)
-analysis_cache = {}
-CACHE_DURATION = timedelta(hours=1)  # Cache selama 1 jam
+# Simple in-memory cache for optimization (production: use Redis)
+analysis_cache: Dict[str, Dict] = {}
+CACHE_DURATION = timedelta(hours=1)  # Cache for 1 hour
+
 
 def load_drug_interactions() -> List[Dict]:
-    """Load enhanced drug interactions database"""
-    file_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "drug_interactions.json")
+    """Load the enhanced drug interactions database from a JSON file."""
+    file_path = os.path.join(
+        os.path.dirname(__file__), "..", "..", "data", "drug_interactions.json"
+    )
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        # Return fallback data jika file tidak ada
+        # Return fallback data if the file is missing
         return [
             {
                 "id": 1,
                 "drug_a": "Warfarin",
-                "drug_b": "Ibuprofen", 
+                "drug_b": "Ibuprofen",
                 "severity": "MAJOR",
                 "mechanism": "Increased anticoagulant effect",
                 "clinical_effect": "Significantly increased bleeding risk",
@@ -42,14 +50,17 @@ def load_drug_interactions() -> List[Dict]:
             }
         ]
 
+
 def load_patients() -> List[Dict]:
-    """Load patients database"""
-    file_path = os.path.join(os.path.dirname(__file__), "..", "..", "data", "patients.json")
+    """Load the patients database from a JSON file."""
+    file_path = os.path.join(
+        os.path.dirname(__file__), "..", "..", "data", "patients.json"
+    )
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
-        # Return P001 fallback data untuk test case
+        # Return fallback data for test cases
         return [
             {
                 "id": "P001",
@@ -68,149 +79,94 @@ def load_patients() -> List[Dict]:
                     "Metformin 500mg BID (for diabetes control)"
                 ],
                 "allergies": ["Penicillin (rash)"]
+            },
+            {
+                "id": "P002",
+                "name": "Ibu Sari Dewi",
+                "age": 58,
+                "gender": "Female",
+                "weight_kg": 62.0,
+                "current_medications": ["Metformin 850mg", "Gliclazide 80mg"],
+                "diagnoses_text": [
+                    "Type 2 diabetes mellitus",
+                    "Chronic kidney disease, stage 3",
+                ],
+                "allergies": []
+            },
+            {
+                "id": "P003",
+                "name": "Bapak Hendrik Wijaya",
+                "age": 65,
+                "gender": "Male",
+                "weight_kg": 78.0,
+                "current_medications": [
+                    "Digoxin 0.25mg",
+                    "Salbutamol inhaler",
+                    "Atorvastatin 20mg",
+                ],
+                "diagnoses_text": [
+                    "Heart failure",
+                    "COPD with acute exacerbation",
+                    "Hyperlipidemia",
+                ],
+                "allergies": ["Aspirin"]
+            },
+            {
+                "id": "P004",
+                "name": "Ibu Maria Gonzalez",
+                "age": 45,
+                "gender": "Female",
+                "weight_kg": 55.0,
+                "current_medications": ["Amlodipine 5mg", "Hydrochlorothiazide 25mg"],
+                "diagnoses_text": ["Hypertension", "Migraine"],
+                "allergies": []
+            },
+            {
+                "id": "P005",
+                "name": "Bapak Rizky Rahman",
+                "age": 38,
+                "gender": "Male",
+                "weight_kg": 70.0,
+                "current_medications": [],
+                "diagnoses_text": ["Healthy adult"],
+                "allergies": []
             }
         ]
 
+
 def create_cache_key(patient_id: str, medications: List[str], notes: str) -> str:
-    """Buat cache key untuk request yang sama"""
+    """Create a unique cache key for an analysis request."""
     content = f"{patient_id}|{sorted(medications)}|{notes}"
     return hashlib.md5(content.encode()).hexdigest()
 
+
 def is_cache_valid(timestamp: datetime) -> bool:
-    """Check apakah cache masih valid"""
+    """Check if a cache entry is still valid based on its timestamp."""
     return datetime.now() - timestamp < CACHE_DURATION
 
+
 async def get_cached_analysis(cache_key: str) -> Optional[Dict]:
-    """Get analysis dari cache jika masih valid"""
+    """Get analysis from cache if it exists and is still valid."""
     if cache_key in analysis_cache:
         cached_data = analysis_cache[cache_key]
         if is_cache_valid(cached_data['timestamp']):
             cached_data['result']['from_cache'] = True
             return cached_data['result']
-        else:
-            # Remove expired cache
-            del analysis_cache[cache_key]
+        # Remove expired cache entry
+        del analysis_cache[cache_key]
     return None
 
+
 def cache_analysis(cache_key: str, result: Dict) -> None:
-    """Cache analysis result"""
+    """Cache an analysis result with the current timestamp."""
     analysis_cache[cache_key] = {
         'timestamp': datetime.now(),
         'result': result.copy()
     }
 
-@router.post("/analyze-interactions", response_model=InteractionResponse)
-async def analyze_interactions(request: InteractionRequest):
-    """
-    Enhanced drug interaction analysis dengan multi-layered clinical decision support
-    
-    Fitur DAY 2:
-    - Advanced prompt engineering
-    - Multi-layered analysis (drug-drug, drug-disease, age-related)
-    - Performance optimization dengan caching
-    - Comprehensive clinical recommendations
-    """
-    
-    start_time = time.time()
-    
-    try:
-        # Create cache key
-        cache_key = create_cache_key(request.patient_id, request.new_medications, request.notes or "")
-        
-        # Check cache first untuk performance optimization
-        cached_result = await get_cached_analysis(cache_key)
-        if cached_result:
-            print(f"✅ Cache hit for patient {request.patient_id}")
-            return InteractionResponse(**cached_result)
-        
-        # Find patient data
-        patients = load_patients()
-        patient_data = None
-        
-        for patient in patients:
-            if patient["id"] == request.patient_id:
-                patient_data = patient
-                break
-        
-        if not patient_data:
-            raise HTTPException(
-                status_code=404, 
-                detail=f"Patient {request.patient_id} not found in database"
-            )
-        
-        # Load enhanced drug interactions database
-        drug_interactions_db = load_drug_interactions()
-        
-        # Enhanced AI analysis dengan timeout protection
-        try:
-            # Set timeout untuk Groq API call (2.5 detik untuk memenuhi target <3s total)
-            analysis_task = groq_service.analyze_drug_interactions(
-                patient_data=patient_data,
-                new_medications=request.new_medications,
-                drug_interactions_db=drug_interactions_db,
-                notes=request.notes or ""
-            )
-            
-            analysis_result = await asyncio.wait_for(analysis_task, timeout=2.5)
-            
-        except asyncio.TimeoutError:
-            # Fallback response jika Groq API timeout
-            analysis_result = _create_timeout_fallback_response(patient_data, request.new_medications)
-        
-        # Add performance metadata
-        processing_time = time.time() - start_time
-        analysis_result['processing_time'] = round(processing_time, 3)
-        analysis_result['from_cache'] = False
-        
-        # Validate dan enhance response
-        enhanced_result = _enhance_analysis_result(analysis_result, patient_data, request.new_medications)
-        
-        # Cache result untuk request yang sama di masa depan
-        cache_analysis(cache_key, enhanced_result)
-        
-        # Log successful analysis
-        print(f"✅ Analysis completed for {request.patient_id} in {processing_time:.3f}s")
-        
-        return InteractionResponse(**enhanced_result)
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        processing_time = time.time() - start_time
-        print(f"❌ Analysis failed for {request.patient_id}: {str(e)}")
-        
-        # Create comprehensive error response
-        error_response = {
-            "analysis_timestamp": datetime.now().isoformat(),
-            "patient_id": request.patient_id,
-            "overall_risk_level": "MODERATE",  # Default to moderate for safety
-            "safe_to_prescribe": False,
-            "warnings": [
-                {
-                    "severity": "MAJOR",
-                    "type": "SYSTEM_ERROR",
-                    "drugs_involved": request.new_medications,
-                    "description": "Unable to complete automated drug interaction analysis",
-                    "clinical_significance": "Manual pharmacist review required before prescribing",
-                    "recommendation": "Consult clinical pharmacist for manual drug interaction review",
-                    "monitoring_required": "Manual assessment of all drug interactions"
-                }
-            ],
-            "contraindications": [],
-            "dosing_adjustments": [],
-            "monitoring_plan": ["Manual pharmacist consultation required"],
-            "llm_reasoning": f"System error prevented automated analysis: {str(e)}. Manual review strongly recommended for patient safety.",
-            "confidence_score": 0.0,
-            "error": True,
-            "error_message": str(e),
-            "processing_time": round(processing_time, 3),
-            "from_cache": False
-        }
-        
-        raise HTTPException(status_code=500, detail=error_response)
 
 def _create_timeout_fallback_response(patient_data: Dict, new_medications: List[str]) -> Dict:
-    """Create fallback response when Groq API times out"""
+    """Create fallback response when Groq API times out."""
     return {
         "analysis_timestamp": datetime.now().isoformat(),
         "patient_id": patient_data.get('id', 'Unknown'),
@@ -235,21 +191,61 @@ def _create_timeout_fallback_response(patient_data: Dict, new_medications: List[
         "timeout_error": True
     }
 
-def _enhance_analysis_result(result: Dict, patient_data: Dict, new_medications: List[str]) -> Dict:
-    """Enhance analysis result dengan additional clinical context"""
+
+def _enhance_analysis_result(
+    result: Dict, patient_data: Dict, new_medications: List[str]
+) -> Dict:
+    """Enhance the AI analysis result with additional rule-based clinical context."""
     
-    # Ensure required fields exist
-    if 'warnings' not in result:
-        result['warnings'] = []
-    if 'contraindications' not in result:
+    # Ensure required fields exist with the correct format
+    for key, default_value in {
+        'warnings': [], 'contraindications': [], 'dosing_adjustments': [],
+        'monitoring_plan': []
+    }.items():
+        if key not in result or not isinstance(result[key], list):
+            result[key] = default_value
+
+    # VALIDASI dan PERBAIKI warnings - pastikan semua required fields ada
+    for i, warning in enumerate(result.get('warnings', [])):
+        if isinstance(warning, dict):
+            # Pastikan semua required fields ada dengan default values
+            result['warnings'][i] = {
+                "severity": warning.get('severity', 'MODERATE'),
+                "type": warning.get('type', 'SYSTEM_ERROR'),
+                "drugs_involved": warning.get('drugs_involved', new_medications),
+                "description": warning.get('description', 'Drug interaction detected'),
+                "clinical_significance": warning.get('clinical_significance', 'Clinical assessment required'),
+                "recommendation": warning.get('recommendation', 'Consult healthcare provider'),
+                "monitoring_required": warning.get('monitoring_required', 'Standard monitoring')
+            }
+
+    # Validate and convert contraindications if they are strings
+    if result['contraindications'] and isinstance(result['contraindications'][0], str):
+        old_contraindications = result['contraindications']
         result['contraindications'] = []
-    if 'monitoring_plan' not in result:
-        result['monitoring_plan'] = []
-    
-    # Add patient age-related warnings jika diperlukan
+        for contra_str in old_contraindications:
+            result['contraindications'].append({
+                "drug": "Unknown",
+                "diagnosis": "Unknown", 
+                "reason": contra_str,
+                "alternative_suggested": None
+            })
+
+    # Validate and convert dosing_adjustments if they are strings  
+    if result['dosing_adjustments'] and isinstance(result['dosing_adjustments'][0], str):
+        old_adjustments = result['dosing_adjustments']
+        result['dosing_adjustments'] = []
+        for adj_str in old_adjustments:
+            result['dosing_adjustments'].append({
+                "drug": "Unknown",
+                "standard_dose": "Standard dosing",
+                "recommended_dose": "See clinical notes",
+                "reason": adj_str
+            })
+
+    # Add patient age-related warnings if necessary (geriatric check)
     patient_age = patient_data.get('age', 0)
     if patient_age >= 65:
-        # Check for potentially inappropriate medications in elderly
         pim_medications = ['ibuprofen', 'diclofenac', 'indomethacin', 'ketorolac']
         for med in new_medications:
             for pim in pim_medications:
@@ -260,63 +256,182 @@ def _enhance_analysis_result(result: Dict, patient_data: Dict, new_medications: 
                         "drugs_involved": [med],
                         "description": f"Potentially inappropriate medication in elderly patient (age {patient_age})",
                         "clinical_significance": "Increased risk of adverse effects in geriatric population",
-                        "recommendation": "Consider alternative medication or lower dose",
+                        "recommendation": "Consider alternative medication or dose reduction",
                         "monitoring_required": "Enhanced monitoring for adverse effects"
                     })
+                    
+                    result['dosing_adjustments'].append({
+                        "drug": med,
+                        "standard_dose": "Adult dose",
+                        "recommended_dose": "Reduce dose by 25-50% or consider alternative",
+                        "reason": f"Age-related dose adjustment for {patient_age} year old patient"
+                    })
+
+    # Add kidney function warnings for nephrotoxic drugs if CKD is diagnosed
+    diagnoses = patient_data.get('diagnoses_text', [])
+    kidney_related = any('kidney' in diag.lower() or 'ginjal' in diag.lower() for diag in diagnoses)
     
-    # Add kidney function considerations jika ada creatinine data
-    current_meds = patient_data.get('current_medications', [])
-    if any('metformin' in med.lower() for med in current_meds):
-        result['monitoring_plan'].append("Monitor kidney function (eGFR) regularly")
+    if kidney_related:
+        nephrotoxic_drugs = ['ibuprofen', 'diclofenac', 'naproxen', 'metformin']
+        for med in new_medications:
+            for nephro in nephrotoxic_drugs:
+                if nephro.lower() in med.lower():
+                    result['contraindications'].append({
+                        "drug": med,
+                        "diagnosis": "Chronic Kidney Disease",
+                        "reason": "Nephrotoxic medication contraindicated in kidney disease",
+                        "alternative_suggested": "Paracetamol (if pain relief needed)"
+                    })
+
+    # Ensure required timestamp format
+    if 'analysis_timestamp' not in result:
+        result['analysis_timestamp'] = datetime.now().isoformat()
     
     return result
 
+
+@router.post("/analyze-interactions", response_model=InteractionResponse)
+async def analyze_interactions(request: InteractionRequest):
+    """
+    Run enhanced drug interaction analysis with multi-layered clinical
+    decision support.
+    """
+    start_time = time.time()
+    cache_key = create_cache_key(
+        request.patient_id, request.new_medications, request.notes or ""
+    )
+
+    try:
+        # Check cache first for performance optimization
+        cached_result = await get_cached_analysis(cache_key)
+        if cached_result:
+            print(f"✅ Cache hit for patient {request.patient_id}")
+            return InteractionResponse(**cached_result)
+
+        # Find patient data
+        patients = load_patients()
+        patient_data = next((p for p in patients if p["id"] == request.patient_id), None)
+
+        if not patient_data:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Patient {request.patient_id} not found in database"
+            )
+
+        # Load enhanced drug interactions database
+        drug_interactions_db = load_drug_interactions()
+
+        # Enhanced AI analysis with timeout protection
+        try:
+            analysis_task = groq_service.analyze_drug_interactions(
+                patient_data=patient_data,
+                new_medications=request.new_medications,
+                drug_interactions_db=drug_interactions_db,
+                notes=request.notes or ""
+            )
+            analysis_result = await asyncio.wait_for(analysis_task, timeout=2.5)
+
+        except asyncio.TimeoutError:
+            # Fallback response if Groq API times out
+            analysis_result = _create_timeout_fallback_response(
+                patient_data, request.new_medications
+            )
+
+        # Add performance metadata and enhance the result
+        processing_time = time.time() - start_time
+        analysis_result['processing_time'] = round(processing_time, 3)
+        analysis_result['from_cache'] = False
+        enhanced_result = _enhance_analysis_result(
+            analysis_result, patient_data, request.new_medications
+        )
+
+        # Cache the new result
+        cache_analysis(cache_key, enhanced_result)
+        print(f"✅ Analysis completed for {request.patient_id} in {processing_time:.3f}s")
+
+        return InteractionResponse(**enhanced_result)
+
+    except HTTPException:
+        raise  # Re-raise HTTPException to let FastAPI handle it
+    except Exception as e:
+        # Create comprehensive error response for the client
+        processing_time = time.time() - start_time
+        print(f"❌ Analysis failed for {request.patient_id}: {e}")
+        
+        error_response = {
+            "analysis_timestamp": datetime.now().isoformat(),
+            "patient_id": request.patient_id,
+            "overall_risk_level": "MODERATE",  # Default to moderate for safety
+            "safe_to_prescribe": False,
+            "warnings": [
+                {
+                    "severity": "MAJOR",
+                    "type": "SYSTEM_ERROR",
+                    "drugs_involved": request.new_medications,
+                    "description": "Unable to complete automated drug interaction analysis",
+                    "clinical_significance": "Manual pharmacist review required before prescribing",
+                    "recommendation": "Consult clinical pharmacist for manual drug interaction review",
+                    "monitoring_required": "Manual assessment of all drug interactions"
+                }
+            ],
+            "contraindications": [],
+            "dosing_adjustments": [],
+            "monitoring_plan": ["Manual pharmacist consultation required"],
+            "llm_reasoning": f"System error prevented automated analysis: {e}. Manual review strongly recommended for patient safety.",
+            "confidence_score": 0.0,
+            "processing_time": round(processing_time, 3),
+            "from_cache": False
+        }
+        
+        return InteractionResponse(**error_response)
+
+
 @router.get("/test-groq", response_model=GroqTestResponse)
 async def test_groq_connection():
-    """Test enhanced Groq API connection dengan performance measurement"""
+    """Test the Groq API connection and measure performance."""
     start_time = time.time()
-    
+    timestamp = datetime.now().isoformat()
     try:
         result = await groq_service.test_connection()
         response_time = time.time() - start_time
-        
+        success = "GROQ_CONNECTION_OK" in result
         return GroqTestResponse(
-            status="success" if "GROQ_CONNECTION_OK" in result else "warning",
-            response=result,
-            response_time=round(response_time, 3)
+            success=success,
+            response=f"{result} (took {response_time:.3f}s)",
+            error=None if success else "Unexpected response format from Groq.",
+            timestamp=timestamp
         )
-        
     except Exception as e:
-        response_time = time.time() - start_time
         return GroqTestResponse(
-            status="error",
-            response=f"Connection failed: {str(e)}",
-            response_time=round(response_time, 3)
+            success=False,
+            response=None,
+            error=f"Connection failed: {str(e)}",
+            timestamp=timestamp
         )
+
 
 @router.get("/cache-stats")
 async def get_cache_statistics():
-    """Get cache statistics untuk monitoring performance"""
-    total_cached = len(analysis_cache)
-    valid_cached = sum(1 for cached_data in analysis_cache.values() 
-                      if is_cache_valid(cached_data['timestamp']))
-    
+    """Get cache statistics for performance monitoring."""
+    total = len(analysis_cache)
+    valid = sum(1 for c in analysis_cache.values() if is_cache_valid(c['timestamp']))
+    hit_ratio = (valid / max(total, 1)) * 100
     return {
-        "total_cached_analyses": total_cached,
-        "valid_cached_analyses": valid_cached,
-        "cache_hit_ratio": f"{(valid_cached/max(total_cached, 1)*100):.1f}%",
+        "total_cached_analyses": total,
+        "valid_cached_analyses": valid,
+        "cache_hit_ratio": f"{hit_ratio:.1f}%",
         "cache_duration_hours": CACHE_DURATION.total_seconds() / 3600
     }
 
+
 @router.delete("/clear-cache")
 async def clear_analysis_cache():
-    """Clear analysis cache - untuk development/testing"""
+    """Clear the analysis cache. Intended for development/testing."""
     global analysis_cache
     cleared_count = len(analysis_cache)
-    analysis_cache.clear()
-    
+    analysis_cache = {}  # Re-assign to a new empty dict
     return {
-        "message": f"Cache cleared successfully",
+        "message": "Cache cleared successfully",
         "items_cleared": cleared_count,
         "timestamp": datetime.now().isoformat()
     }

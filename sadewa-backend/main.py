@@ -1,51 +1,55 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
+"""
+Main application file for the SADEWA API.
+
+This file initializes the FastAPI application, sets up middleware,
+includes API routers, and defines root and health check endpoints.
+"""
+
 import os
+from datetime import datetime
 
-# Import routers
-from app.routers import patients
-from app.routers import icd10
-from app.routers import drugs
-from app.routers import interactions
-
-# Import database (untuk health check)
-from app.database import engine
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.database import engine
+from app.routers import drugs, icd10, interactions, patients
 
 app = FastAPI(
     title="SADEWA - Smart Assistant for Drug & Evidence Warning",
     description="Complete AI-powered drug interaction analysis system",
-    version="3.0.0",
+    version="1.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# CORS middleware untuk frontend integration
+# CORS middleware for frontend integration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Production: ganti dengan domain spesifik
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Include routers dengan prefix yang benar
+# Include routers with correct prefixes
 app.include_router(patients.router, prefix="/api", tags=["patients"])
 app.include_router(icd10.router, prefix="/api/icd10", tags=["icd10"])
 app.include_router(interactions.router, prefix="/api", tags=["interactions"])
-app.include_router(drugs.router, prefix="/api/drugs", tags=["drugs"])  # Fixed prefix
+app.include_router(drugs.router, prefix="/api/drugs", tags=["drugs"])
+
 
 @app.get("/")
 async def root():
-    """Root endpoint dengan informasi API"""
+    """Root endpoint with API information."""
     return {
         "message": "SADEWA API - Smart Assistant for Drug & Evidence Warning",
-        "version": "3.0.0",
+        "version": "1.0.0",
         "status": "operational",
         "features": [
             "Drug interaction analysis",
-            "ICD-10 disease search", 
+            "ICD-10 disease search",
             "Patient management",
             "AI-powered recommendations",
             "Complete drug database (Fornas)"
@@ -57,47 +61,50 @@ async def root():
         }
     }
 
+
 @app.get("/health")
 async def health_check():
-    """Enhanced health check dengan database status"""
+    """Enhanced health check with database status."""
+    db_status = "error"
+    icd_count = 0
+    drug_count = 0
+    patient_count = 0  # Default from patients.json
+
     try:
-        # Test database connection
         with engine.connect() as connection:
-            # Basic connection test
-            result = connection.execute(text("SELECT 1"))
+            # Basic connection test (result variable is not needed)
+            connection.execute(text("SELECT 1"))
             db_status = "connected"
-            
+
             # Count ICD-10 records
             try:
                 icd_result = connection.execute(text("SELECT COUNT(*) FROM icd10"))
                 icd_count = icd_result.scalar()
-            except Exception:
-                icd_count = 0
-            
+            except SQLAlchemyError:
+                icd_count = 0  # Keep it at 0 if this specific query fails
+
             # Count drugs records
             try:
-                drug_result = connection.execute(text("SELECT COUNT(*) FROM drugs WHERE is_active = 1"))
+                drug_result = connection.execute(
+                    text("SELECT COUNT(*) FROM drugs WHERE is_active = 1")
+                )
                 drug_count = drug_result.scalar()
-            except Exception:
-                drug_count = 0
-            
-            # Count patients (if table exists)
-            try:
-                # Patients might be in JSON file, not database
-                patient_count = 10  # Default from patients.json
-            except Exception:
-                patient_count = 0
-    
-    except Exception as e:
+            except SQLAlchemyError:
+                drug_count = 0  # Keep it at 0 if this specific query fails
+
+            # Patient count is hardcoded as it comes from a JSON file
+            patient_count = 10
+
+    except SQLAlchemyError as e:
         db_status = f"error: {str(e)}"
-        icd_count = 0
-        drug_count = 0
-        patient_count = 0
-    
+        # All counts remain 0 if the initial connection fails
+
+    ai_status = "operational" if os.getenv("GROQ_API_KEY") else "limited"
+
     return {
         "status": "healthy" if db_status == "connected" else "degraded",
         "timestamp": datetime.now().isoformat(),
-        "version": "3.0.0",
+        "version": "1.0.0",
         "database": {
             "status": db_status,
             "icd_records": icd_count,
@@ -106,20 +113,21 @@ async def health_check():
         },
         "services": {
             "drug_search": "operational",
-            "interaction_analysis": "operational", 
+            "interaction_analysis": "operational",
             "icd10_search": "operational",
-            "ai_analysis": "operational" if os.getenv("GROQ_API_KEY") else "limited"
+            "ai_analysis": ai_status
         }
     }
 
+
 @app.get("/api/system/info")
 async def system_info():
-    """System information endpoint"""
+    """System information endpoint."""
     return {
         "system_name": "SADEWA",
         "full_name": "Smart Assistant for Drug & Evidence Warning",
-        "version": "3.0.0",
-        "build_date": "2024-01-15",
+        "version": "1.0.0",
+        "build_date": "2025-09-01",
         "environment": os.getenv("ENVIRONMENT", "development"),
         "database": {
             "type": "MySQL",
@@ -140,6 +148,7 @@ async def system_info():
             "interactions": "Clinical knowledge base"
         }
     }
+
 
 if __name__ == "__main__":
     import uvicorn

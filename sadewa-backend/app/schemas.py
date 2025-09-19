@@ -1,16 +1,20 @@
-# sadewa-backend/app/schemas.py
 """
-SADEWA API Schemas - FIXED with proper imports
-Extended schemas untuk patient management
+SADEWA API Schemas
+
+Defines the Pydantic models for data validation and serialization,
+including extended schemas for patient management and interaction analysis.
 """
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+# Standard library imports
 from datetime import datetime
+from typing import Dict, List, Optional
+
+# Third-party imports
+from pydantic import BaseModel, Field
 
 
 # === PATIENT SCHEMAS ===
 class PatientBase(BaseModel):
-    """Base schema untuk Patient"""
+    """Base schema for Patient."""
     name: str = Field(..., description="Nama pasien")
     age: int = Field(..., ge=0, le=150, description="Umur pasien")
     gender: str = Field(..., description="Jenis kelamin (male/female)")
@@ -18,12 +22,11 @@ class PatientBase(BaseModel):
 
 
 class PatientCreate(PatientBase):
-    """Schema untuk create patient baru"""
-    pass
+    """Schema to create a new patient."""
 
 
 class PatientUpdate(BaseModel):
-    """Schema untuk update patient"""
+    """Schema to update a patient."""
     name: Optional[str] = Field(None, description="Nama pasien")
     age: Optional[int] = Field(None, ge=0, le=150, description="Umur pasien")
     gender: Optional[str] = Field(None, description="Jenis kelamin")
@@ -31,7 +34,7 @@ class PatientUpdate(BaseModel):
 
 
 class PatientResponse(BaseModel):
-    """Schema untuk response patient data"""
+    """Schema for patient data response."""
     id: int = Field(..., description="ID pasien")
     name: str = Field(..., description="Nama pasien")
     age: int = Field(..., description="Umur pasien")
@@ -39,14 +42,15 @@ class PatientResponse(BaseModel):
     phone: Optional[str] = Field(None, description="Nomor telepon")
     created_at: datetime = Field(..., description="Tanggal dibuat")
     updated_at: datetime = Field(..., description="Tanggal update")
-    
+
     class Config:
+        """Pydantic configuration."""
         from_attributes = True
 
 
 # === MEDICAL RECORD SCHEMAS ===
 class MedicalRecordBase(BaseModel):
-    """Base schema untuk Medical Record"""
+    """Base schema for a Medical Record."""
     diagnosis_code: Optional[str] = Field(None, description="Kode ICD-10")
     diagnosis_text: Optional[str] = Field(None, description="Teks diagnosis")
     medications: List[str] = Field(default_factory=list, description="Daftar obat")
@@ -54,12 +58,12 @@ class MedicalRecordBase(BaseModel):
 
 
 class MedicalRecordCreate(MedicalRecordBase):
-    """Schema untuk create medical record baru"""
+    """Schema to create a new medical record."""
     patient_id: int = Field(..., description="ID pasien")
 
 
 class MedicalRecordUpdate(BaseModel):
-    """Schema untuk update medical record"""
+    """Schema to update a medical record."""
     diagnosis_code: Optional[str] = Field(None, description="Kode ICD-10")
     diagnosis_text: Optional[str] = Field(None, description="Teks diagnosis")
     medications: Optional[List[str]] = Field(None, description="Daftar obat")
@@ -67,7 +71,7 @@ class MedicalRecordUpdate(BaseModel):
 
 
 class MedicalRecordResponse(BaseModel):
-    """Schema untuk response medical record"""
+    """Schema for a medical record response."""
     id: int = Field(..., description="ID record")
     patient_id: int = Field(..., description="ID pasien")
     diagnosis_code: Optional[str] = Field(None, description="Kode ICD-10")
@@ -77,22 +81,23 @@ class MedicalRecordResponse(BaseModel):
     notes: Optional[str] = Field(None, description="Catatan")
     created_at: datetime = Field(..., description="Tanggal dibuat")
     updated_at: datetime = Field(..., description="Tanggal update")
-    
+
     class Config:
+        """Pydantic configuration."""
         from_attributes = True
 
 
 class PatientDetailResponse(PatientResponse):
-    """Schema untuk response patient dengan medical records"""
+    """Schema for patient response with their medical records."""
     medical_records: List[MedicalRecordResponse] = Field(
-        default_factory=list, 
+        default_factory=list,
         description="Riwayat medis"
     )
 
 
 # === API RESPONSE SCHEMAS ===
 class PatientListResponse(BaseModel):
-    """Schema untuk response list patients"""
+    """Schema for a list of patients response."""
     patients: List[PatientResponse] = Field(..., description="Daftar pasien")
     total: int = Field(..., description="Total pasien")
     page: int = Field(1, description="Halaman saat ini")
@@ -100,7 +105,7 @@ class PatientListResponse(BaseModel):
 
 
 class SaveDiagnosisRequest(BaseModel):
-    """Schema untuk save diagnosis dari existing drug analysis"""
+    """Schema to save a diagnosis from an existing drug analysis."""
     patient_id: int = Field(..., description="ID pasien")
     diagnosis_code: Optional[str] = Field(None, description="Kode ICD-10")
     diagnosis_text: Optional[str] = Field(None, description="Teks diagnosis")
@@ -109,9 +114,9 @@ class SaveDiagnosisRequest(BaseModel):
     notes: Optional[str] = Field(None, description="Catatan klinis")
 
 
-# === ICD10 SCHEMAS (untuk compatibility dengan existing routers) ===
+# === ICD10 SCHEMAS (for compatibility) ===
 class ICD10Result(BaseModel):
-    """Schema untuk hasil pencarian ICD-10"""
+    """Schema for ICD-10 search results."""
     code: str = Field(..., description="Kode ICD-10")
     name_id: str = Field(..., description="Nama dalam bahasa Indonesia")
     name_en: Optional[str] = Field(None, description="Nama dalam bahasa Inggris")
@@ -119,29 +124,32 @@ class ICD10Result(BaseModel):
 
 
 class ICD10Search(BaseModel):
-    """Schema untuk request pencarian ICD-10"""
+    """Schema for an ICD-10 search request."""
     query: str = Field(..., description="Query pencarian")
     limit: Optional[int] = Field(10, description="Limit hasil")
 
 
-# === DRUG SCHEMAS (untuk compatibility) ===
+# === DRUG SCHEMAS (for compatibility) ===
 class DrugSearchResponse(BaseModel):
-    """Schema untuk hasil pencarian obat"""
+    """Schema for drug search results."""
     id: int = Field(..., description="ID obat")
     nama_obat: str = Field(..., description="Nama obat")
     nama_obat_internasional: str = Field(..., description="Nama internasional")
     display_name: str = Field(..., description="Nama untuk display")
 
-# === INTERACTION SCHEMAS (untuk compatibility) ===
+
+# === INTERACTION SCHEMAS (for compatibility) ===
 class InteractionRequest(BaseModel):
-    """Schema untuk request analisis interaksi"""
+    """Schema for a drug interaction analysis request."""
     patient_id: str = Field(..., description="ID pasien")
-    new_medications: List[str] = Field(..., description="Daftar obat baru")
-    notes: Optional[str] = Field("", description="Catatan tambahan")
+    new_medications: List[str] = Field(..., description="List obat baru")
+    diagnoses: Optional[List[str]] = Field(None, description="List ICD-10 codes")
+    notes: Optional[str] = Field(None, description="Catatan tambahan")
+
 
 # === INTERACTION RESPONSE SCHEMAS ===
 class InteractionWarning(BaseModel):
-    """Schema untuk warning dalam analisis interaksi"""
+    """Schema for an interaction warning."""
     severity: str = Field(..., description="Level severity: MAJOR/MODERATE/MINOR")
     type: str = Field(..., description="Tipe warning")
     drugs_involved: List[str] = Field(..., description="Obat yang terlibat")
@@ -151,16 +159,36 @@ class InteractionWarning(BaseModel):
     monitoring_required: Optional[str] = Field(None, description="Monitoring yang diperlukan")
 
 
+class Contraindication(BaseModel):
+    """Schema for contraindication details."""
+    drug: str = Field(..., description="Nama obat")
+    diagnosis: str = Field(..., description="Diagnosis terkait")
+    reason: str = Field(..., description="Alasan kontraindikasi")
+    alternative_suggested: Optional[str] = Field(None, description="Saran alternatif obat")
+
+
+class DosingAdjustment(BaseModel):
+    """Schema for dosing adjustment details."""
+    drug: str = Field(..., description="Nama obat")
+    standard_dose: str = Field(..., description="Dosis standar")
+    recommended_dose: str = Field(..., description="Dosis yang direkomendasikan")
+    reason: str = Field(..., description="Alasan penyesuaian dosis")
+
+
 class InteractionResponse(BaseModel):
-    """Schema untuk response analisis interaksi"""
+    """Schema for the interaction analysis response."""
     analysis_timestamp: str = Field(..., description="Timestamp analisis")
     patient_id: str = Field(..., description="ID pasien")
     overall_risk_level: str = Field(..., description="Level risiko keseluruhan")
     safe_to_prescribe: bool = Field(..., description="Aman untuk diresepkan")
     confidence_score: Optional[float] = Field(None, description="Skor kepercayaan")
     warnings: List[InteractionWarning] = Field(default_factory=list, description="List warning")
-    contraindications: List[str] = Field(default_factory=list, description="Kontraindikasi")
-    dosing_adjustments: List[str] = Field(default_factory=list, description="Penyesuaian dosis")
+    contraindications: List[Contraindication] = Field(
+        default_factory=list, description="Kontraindikasi detail"
+    )
+    dosing_adjustments: List[DosingAdjustment] = Field(
+        default_factory=list, description="Penyesuaian dosis detail"
+    )
     monitoring_plan: List[str] = Field(default_factory=list, description="Rencana monitoring")
     llm_reasoning: Optional[str] = Field(None, description="Penalaran AI")
     processing_time: Optional[float] = Field(None, description="Waktu pemrosesan")
@@ -168,7 +196,7 @@ class InteractionResponse(BaseModel):
 
 
 class GroqTestResponse(BaseModel):
-    """Schema untuk response test Groq API"""
+    """Schema for the Groq API test response."""
     success: bool = Field(..., description="Status keberhasilan")
     response: Optional[str] = Field(None, description="Response dari Groq")
     error: Optional[str] = Field(None, description="Error message jika ada")
