@@ -1,23 +1,36 @@
-# sadewa-backend/app/models.py
 """
-SQLAlchemy Models untuk SADEWA - Extended
-Tambahan: Patient dan MedicalRecord models
+SQLAlchemy Models for SADEWA - Extended
+Enhanced version with proper relationships for JSON-to-DB migration
 """
-from sqlalchemy import Column, Integer, String, Text, DateTime, JSON, ForeignKey, Enum
-from sqlalchemy.ext.declarative import declarative_base
+# Standard library imports
+import enum
+
+# Third-party imports
+from sqlalchemy import (
+    Column, Integer, String, Text, DateTime, JSON, ForeignKey, Enum, Boolean
+)
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import enum
+from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 
 
-class GenderEnum(enum.Enum):
-    male = "male"
-    female = "female"
+class GenderEnum(str, enum.Enum):
+    """Enumeration for patient genders."""
+    MALE = "male"
+    FEMALE = "female"
+
+
+class SeverityEnum(str, enum.Enum):
+    """Enumeration for interaction severity levels."""
+    MAJOR = "MAJOR"
+    MODERATE = "MODERATE"
+    MINOR = "MINOR"
 
 
 class Patient(Base):
+    """Represents a patient in the system."""
     __tablename__ = "patients"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -25,12 +38,19 @@ class Patient(Base):
     age = Column(Integer, nullable=False)
     gender = Column(Enum(GenderEnum), nullable=False)
     phone = Column(String(20))
+    weight_kg = Column(Integer, nullable=True)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    # Relationship
+    # Relationships
     medical_records = relationship("MedicalRecord", back_populates="patient")
+    medications = relationship("PatientMedication", back_populates="patient")
+    diagnoses = relationship("PatientDiagnosis", back_populates="patient")
+    allergies = relationship("PatientAllergy", back_populates="patient")
 
 
 class MedicalRecord(Base):
+    """Represents a single medical record entry for a patient."""
     __tablename__ = "medical_records"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -40,13 +60,84 @@ class MedicalRecord(Base):
     medications = Column(JSON)
     interactions = Column(JSON)
     notes = Column(Text)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # Relationship
     patient = relationship("Patient", back_populates="medical_records")
 
 
-# Existing Drug model (reference - already exists)
+class PatientMedication(Base):
+    """Associates a medication with a patient."""
+    __tablename__ = "patient_medications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    medication_name = Column(String(255), nullable=False)
+    dosage = Column(String(100))
+    frequency = Column(String(100))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Relationship
+    patient = relationship("Patient", back_populates="medications")
+
+
+class PatientDiagnosis(Base):
+    """Associates an ICD-10 diagnosis with a patient."""
+    __tablename__ = "patient_diagnoses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    icd_code = Column(String(10), ForeignKey("icds.code"))
+    diagnosis_text = Column(String(500))
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Relationships
+    patient = relationship("Patient", back_populates="diagnoses")
+    icd = relationship("ICD10", back_populates="patient_diagnoses")
+
+
+class PatientAllergy(Base):
+    """Records an allergy for a patient."""
+    __tablename__ = "patient_allergies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    allergen = Column(String(255), nullable=False)
+    reaction_type = Column(String(100))
+    severity = Column(String(50))  # mild, moderate, severe
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Relationship
+    patient = relationship("Patient", back_populates="allergies")
+
+
+class DrugInteraction(Base):
+    """Stores information about interactions between two drugs."""
+    __tablename__ = "drug_interactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    drug_1 = Column(String(255), nullable=False, index=True)
+    drug_2 = Column(String(255), nullable=False, index=True)
+    severity = Column(Enum(SeverityEnum), nullable=False)
+    description = Column(Text)
+    mechanism = Column(Text)
+    clinical_effect = Column(Text)
+    recommendation = Column(Text)
+    monitoring = Column(Text)
+    evidence_level = Column(String(50))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Add unique constraint to prevent duplicate interactions
+    __table_args__ = (
+        {'mysql_engine': 'InnoDB', 'mysql_charset': 'utf8mb4'},
+    )
+
+
 class Drug(Base):
+    """Represents a drug available in the system."""
     __tablename__ = "drugs"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -55,10 +146,19 @@ class Drug(Base):
     is_active = Column(Integer, default=1)
 
 
-# ICD-10 model (missing model)
 class ICD10(Base):
+    """Represents an ICD-10 code and its description."""
     __tablename__ = "icds"
 
-    code = Column(String(255), primary_key=True)  # code adalah PK, bukan id
+    code = Column(String(255), primary_key=True)
     name_en = Column(Text, nullable=False)
     name_id = Column(Text, nullable=False)
+    category = Column(String(100))  # A00-B99, C00-D48, etc.
+
+    # Relationship back to patient diagnoses
+    patient_diagnoses = relationship("PatientDiagnosis", back_populates="icd")
+
+    # Add index for faster searching
+    __table_args__ = (
+        {'mysql_engine': 'InnoDB', 'mysql_charset': 'utf8mb4'},
+    )

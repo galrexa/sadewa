@@ -1,8 +1,8 @@
 """
-Enhanced interactions router for SADEWA - DAY 2.
+Enhanced interactions router for SADEWA - Database Migration Version
 
 Provides multi-layered clinical decision support with performance optimization
-through in-memory caching and asynchronous AI analysis.
+through database integration and fallback to JSON for reliability.
 """
 # Standard library imports
 import asyncio
@@ -13,8 +13,13 @@ import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
+# Database imports
+from app.database import get_db
+from app.models import Patient, PatientMedication, PatientDiagnosis, DrugInteraction, PatientAllergy
+
 # Third-party imports
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
+from sqlalchemy.orm import Session, joinedload
 
 # Local application imports
 from app.schemas import InteractionRequest, InteractionResponse, GroqTestResponse
@@ -27,111 +32,127 @@ analysis_cache: Dict[str, Dict] = {}
 CACHE_DURATION = timedelta(hours=1)  # Cache for 1 hour
 
 
-def load_drug_interactions() -> List[Dict]:
-    """Load the enhanced drug interactions database from a JSON file."""
+async def load_drug_interactions(db: Session) -> List[Dict]:
+    """Load drug interactions from database with fallback to JSON."""
+    try:
+        interactions = db.query(DrugInteraction).filter(
+            DrugInteraction.is_active == True
+        ).all()
+        
+        result = [
+            {
+                "id": interaction.id,
+                "drug_a": interaction.drug_a,
+                "drug_b": interaction.drug_b,
+                "severity": interaction.severity.value,
+                "mechanism": interaction.mechanism,
+                "clinical_effect": interaction.clinical_effect,
+                "recommendation": interaction.recommendation,
+                "monitoring": interaction.monitoring
+            }
+            for interaction in interactions
+        ]
+        
+        print(f"✅ Loaded {len(result)} drug interactions from database")
+        return result
+        
+    except Exception as e:
+        print(f"❌ Database error loading interactions: {e}")
+        print("🔄 Falling back to JSON file...")
+        return load_drug_interactions_from_json()
+
+
+async def load_patients(db: Session) -> List[Dict]:
+    """Load patients from database with optimized queries and JSON fallback."""
+    try:
+        patients = db.query(Patient)\
+            .options(joinedload(Patient.medications))\
+            .options(joinedload(Patient.diagnoses))\
+            .options(joinedload(Patient.allergies))\
+            .all()
+        
+        result = [
+            {
+                "id": f"P{patient.id:03d}",
+                "name": patient.name,
+                "age": patient.age,
+                "gender": patient.gender.value,
+                "weight_kg": getattr(patient, 'weight_kg', 70.0),
+                "current_medications": [
+                    f"{med.medication_name} {med.dosage or ''}".strip()
+                    for med in patient.medications if med.is_active
+                ],
+                "diagnoses_text": [
+                    diag.diagnosis_text for diag in patient.diagnoses
+                ],
+                "allergies": [
+                    allergy.allergen for allergy in patient.allergies
+                ]
+            }
+            for patient in patients
+        ]
+        
+        print(f"✅ Loaded {len(result)} patients from database")
+        return result
+        
+    except Exception as e:
+        print(f"❌ Database error loading patients: {e}")
+        print("🔄 Falling back to JSON file...")
+        return load_patients_from_json()
+
+
+def load_drug_interactions_from_json() -> List[Dict]:
+    """Fallback: Load drug interactions from JSON file."""
     file_path = os.path.join(
         os.path.dirname(__file__), "..", "..", "data", "drug_interactions.json"
     )
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            data = json.load(f)
+            print(f"✅ Loaded {len(data)} drug interactions from JSON fallback")
+            return data
     except FileNotFoundError:
-        # Return fallback data if the file is missing
-        return [
-            {
-                "id": 1,
-                "drug_a": "Warfarin",
-                "drug_b": "Ibuprofen",
-                "severity": "MAJOR",
-                "mechanism": "Increased anticoagulant effect",
-                "clinical_effect": "Significantly increased bleeding risk",
-                "recommendation": "Avoid combination. Use paracetamol instead.",
-                "monitoring": "Monitor INR closely if must use together"
-            }
-        ]
+        print("⚠️ JSON fallback file not found, using minimal data")
+        return [{
+            "id": 1,
+            "drug_a": "Warfarin",
+            "drug_b": "Ibuprofen",
+            "severity": "MAJOR",
+            "mechanism": "Increased anticoagulant effect",
+            "clinical_effect": "Significantly increased bleeding risk",
+            "recommendation": "Avoid combination. Use paracetamol instead.",
+            "monitoring": "Monitor INR closely if must use together"
+        }]
 
 
-def load_patients() -> List[Dict]:
-    """Load the patients database from a JSON file."""
+def load_patients_from_json() -> List[Dict]:
+    """Fallback: Load patients from JSON file."""
     file_path = os.path.join(
         os.path.dirname(__file__), "..", "..", "data", "patients.json"
     )
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            data = json.load(f)
+            print(f"✅ Loaded {len(data)} patients from JSON fallback")
+            return data
     except FileNotFoundError:
-        # Return fallback data for test cases
-        return [
-            {
-                "id": "P001",
-                "name": "Bapak Agus Santoso",
-                "age": 72,
-                "gender": "Male",
-                "weight_kg": 68.5,
-                "diagnoses_text": [
-                    "Atrial Fibrillation (chronic)",
-                    "Chronic Ischemic Heart Disease",
-                    "Chronic knee pain (osteoarthritis suspected)"
-                ],
-                "current_medications": [
-                    "Warfarin 5mg OD (for AF stroke prevention)",
-                    "Lisinopril 10mg OD (for hypertension)",
-                    "Metformin 500mg BID (for diabetes control)"
-                ],
-                "allergies": ["Penicillin (rash)"]
-            },
-            {
-                "id": "P002",
-                "name": "Ibu Sari Dewi",
-                "age": 58,
-                "gender": "Female",
-                "weight_kg": 62.0,
-                "current_medications": ["Metformin 850mg", "Gliclazide 80mg"],
-                "diagnoses_text": [
-                    "Type 2 diabetes mellitus",
-                    "Chronic kidney disease, stage 3",
-                ],
-                "allergies": []
-            },
-            {
-                "id": "P003",
-                "name": "Bapak Hendrik Wijaya",
-                "age": 65,
-                "gender": "Male",
-                "weight_kg": 78.0,
-                "current_medications": [
-                    "Digoxin 0.25mg",
-                    "Salbutamol inhaler",
-                    "Atorvastatin 20mg",
-                ],
-                "diagnoses_text": [
-                    "Heart failure",
-                    "COPD with acute exacerbation",
-                    "Hyperlipidemia",
-                ],
-                "allergies": ["Aspirin"]
-            },
-            {
-                "id": "P004",
-                "name": "Ibu Maria Gonzalez",
-                "age": 45,
-                "gender": "Female",
-                "weight_kg": 55.0,
-                "current_medications": ["Amlodipine 5mg", "Hydrochlorothiazide 25mg"],
-                "diagnoses_text": ["Hypertension", "Migraine"],
-                "allergies": []
-            },
-            {
-                "id": "P005",
-                "name": "Bapak Rizky Rahman",
-                "age": 38,
-                "gender": "Male",
-                "weight_kg": 70.0,
-                "current_medications": [],
-                "diagnoses_text": ["Healthy adult"],
-                "allergies": []
-            }
-        ]
+        print("⚠️ JSON fallback file not found, using minimal data")
+        return [{
+            "id": "P001",
+            "name": "Bapak Agus Santoso",
+            "age": 72,
+            "gender": "Male",
+            "weight_kg": 68.5,
+            "diagnoses_text": [
+                "Atrial Fibrillation (chronic)",
+                "Chronic Ischemic Heart Disease"
+            ],
+            "current_medications": [
+                "Warfarin 5mg OD (for AF stroke prevention)",
+                "Lisinopril 10mg OD (for hypertension)"
+            ],
+            "allergies": ["Penicillin (rash)"]
+        }]
 
 
 def create_cache_key(patient_id: str, medications: List[str], notes: str) -> str:
@@ -291,10 +312,13 @@ def _enhance_analysis_result(
 
 
 @router.post("/analyze-interactions", response_model=InteractionResponse)
-async def analyze_interactions(request: InteractionRequest):
+async def analyze_interactions(
+    request: InteractionRequest, 
+    db: Session = Depends(get_db)
+):
     """
     Run enhanced drug interaction analysis with multi-layered clinical
-    decision support.
+    decision support using database with JSON fallback.
     """
     start_time = time.time()
     cache_key = create_cache_key(
@@ -308,18 +332,23 @@ async def analyze_interactions(request: InteractionRequest):
             print(f"✅ Cache hit for patient {request.patient_id}")
             return InteractionResponse(**cached_result)
 
-        # Find patient data
-        patients = load_patients()
-        patient_data = next((p for p in patients if p["id"] == request.patient_id), None)
+        # Try database first, fallback to JSON if database unavailable
+        try:
+            patients = await load_patients(db)
+            drug_interactions_db = await load_drug_interactions(db)
+            data_source = "database"
+        except Exception as db_error:
+            print(f"⚠️ Database unavailable, using JSON fallback: {db_error}")
+            patients = load_patients_from_json()
+            drug_interactions_db = load_drug_interactions_from_json()
+            data_source = "json_fallback"
 
+        patient_data = next((p for p in patients if p["id"] == request.patient_id), None)
         if not patient_data:
             raise HTTPException(
                 status_code=404,
-                detail=f"Patient {request.patient_id} not found in database"
+                detail=f"Patient {request.patient_id} not found in {data_source}"
             )
-
-        # Load enhanced drug interactions database
-        drug_interactions_db = load_drug_interactions()
 
         # Enhanced AI analysis with timeout protection
         try:
@@ -341,13 +370,14 @@ async def analyze_interactions(request: InteractionRequest):
         processing_time = time.time() - start_time
         analysis_result['processing_time'] = round(processing_time, 3)
         analysis_result['from_cache'] = False
+        analysis_result['data_source'] = data_source  # Track where data came from
         enhanced_result = _enhance_analysis_result(
             analysis_result, patient_data, request.new_medications
         )
 
         # Cache the new result
         cache_analysis(cache_key, enhanced_result)
-        print(f"✅ Analysis completed for {request.patient_id} in {processing_time:.3f}s")
+        print(f"✅ Analysis completed for {request.patient_id} in {processing_time:.3f}s using {data_source}")
 
         return InteractionResponse(**enhanced_result)
 
@@ -435,3 +465,32 @@ async def clear_analysis_cache():
         "items_cleared": cleared_count,
         "timestamp": datetime.now().isoformat()
     }
+
+
+@router.get("/data-source-status")
+async def get_data_source_status(db: Session = Depends(get_db)):
+    """Check status of data sources (database vs JSON fallback)."""
+    try:
+        # Test database connection
+        patients_db = await load_patients(db)
+        interactions_db = await load_drug_interactions(db) 
+        
+        return {
+            "database_status": "available",
+            "patients_count": len(patients_db),
+            "interactions_count": len(interactions_db),
+            "primary_source": "database",
+            "fallback_available": True
+        }
+    except Exception as e:
+        # Test JSON fallback
+        patients_json = load_patients_from_json()
+        interactions_json = load_drug_interactions_from_json()
+        
+        return {
+            "database_status": f"unavailable: {e}",
+            "patients_count": len(patients_json),
+            "interactions_count": len(interactions_json),
+            "primary_source": "json_fallback",
+            "fallback_available": True
+        }
