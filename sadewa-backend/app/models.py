@@ -25,8 +25,6 @@ class Patient(Base):
     age = Column(Integer, nullable=False)
     gender = Column(Enum(GenderEnum), nullable=False)
     phone = Column(String(20))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationship
     medical_records = relationship("MedicalRecord", back_populates="patient")
@@ -42,8 +40,6 @@ class MedicalRecord(Base):
     medications = Column(JSON)
     interactions = Column(JSON)
     notes = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationship
     patient = relationship("Patient", back_populates="medical_records")
@@ -57,7 +53,6 @@ class Drug(Base):
     nama_obat = Column(String(255), nullable=False)
     nama_obat_internasional = Column(String(255), nullable=False)
     is_active = Column(Integer, default=1)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
 # ICD-10 model (missing model)

@@ -78,7 +78,7 @@ async def health_check():
 
             # Count ICD-10 records
             try:
-                icd_result = connection.execute(text("SELECT COUNT(*) FROM icd10"))
+                icd_result = connection.execute(text("SELECT COUNT(*) FROM icds"))
                 icd_count = icd_result.scalar()
             except SQLAlchemyError:
                 icd_count = 0  # Keep it at 0 if this specific query fails
