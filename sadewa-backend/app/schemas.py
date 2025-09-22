@@ -141,7 +141,7 @@ class DrugSearchResponse(BaseModel):
 # === INTERACTION SCHEMAS (for compatibility) ===
 class InteractionRequest(BaseModel):
     """Schema for a drug interaction analysis request."""
-    patient_id: str = Field(..., description="ID pasien")
+    patient_id: int = Field(..., description="ID pasien")
     new_medications: List[str] = Field(..., description="List obat baru")
     diagnoses: Optional[List[str]] = Field(None, description="List ICD-10 codes")
     notes: Optional[str] = Field(None, description="Catatan tambahan")
@@ -178,7 +178,7 @@ class DosingAdjustment(BaseModel):
 class InteractionResponse(BaseModel):
     """Schema for the interaction analysis response."""
     analysis_timestamp: str = Field(..., description="Timestamp analisis")
-    patient_id: str = Field(..., description="ID pasien")
+    patient_id: int = Field(..., description="ID pasien")
     overall_risk_level: str = Field(..., description="Level risiko keseluruhan")
     safe_to_prescribe: bool = Field(..., description="Aman untuk diresepkan")
     confidence_score: Optional[float] = Field(None, description="Skor kepercayaan")

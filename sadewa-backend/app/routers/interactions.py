@@ -73,7 +73,7 @@ async def load_patients(db: Session) -> List[Dict]:
         
         result = [
             {
-                "id": f"P{patient.id:03d}",
+                "id": patient.id,
                 "name": patient.name,
                 "age": patient.age,
                 "gender": patient.gender.value,
@@ -155,7 +155,7 @@ def load_patients_from_json() -> List[Dict]:
         }]
 
 
-def create_cache_key(patient_id: str, medications: List[str], notes: str) -> str:
+def create_cache_key(patient_id: int, medications: List[str], notes: str) -> str:
     """Create a unique cache key for an analysis request."""
     content = f"{patient_id}|{sorted(medications)}|{notes}"
     return hashlib.md5(content.encode()).hexdigest()

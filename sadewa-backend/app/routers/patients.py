@@ -126,7 +126,7 @@ def calculate_bmi_category(weight_kg: Optional[int], age: int) -> Optional[str]:
 
 def format_patient_response(patient_data: Dict[str, Any]) -> Dict[str, Any]:
     """Format patient data dengan informasi tambahan"""
-    patient_data['patient_code'] = f"P{patient_data['id']:04d}"
+    patient_data['patient_code'] = patient_data['id']
     patient_data['age_category'] = calculate_age_category(patient_data['age'])
     patient_data['bmi_category'] = calculate_bmi_category(
         patient_data.get('weight_kg'), 
@@ -261,7 +261,7 @@ async def search_patients(
     
 @router.get("/patients/{patient_id}", response_model=PatientResponse)
 async def get_patient_detail(
-    patient_id: str,
+    patient_id: int,
     include_timeline: bool = Query(False, description="Include patient timeline"),
     db: Session = Depends(get_db)
 ):
@@ -315,7 +315,7 @@ async def get_patient_detail(
 
 @router.put("/patients/{patient_id}", response_model=PatientResponse)
 async def update_patient(
-    patient_id: str,
+    patient_id: int,
     update_data: PatientUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
