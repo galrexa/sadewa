@@ -17,9 +17,8 @@ Base = declarative_base()
 
 
 class GenderEnum(str, enum.Enum):
-    """Enumeration for patient genders."""
-    MALE = "male"
-    FEMALE = "female"
+    male = "male"
+    female = "female"
 
 
 class SeverityEnum(str, enum.Enum):
@@ -118,8 +117,8 @@ class DrugInteraction(Base):
     __tablename__ = "drug_interactions"
 
     id = Column(Integer, primary_key=True, index=True)
-    drug_1 = Column(String(255), nullable=False, index=True)
-    drug_2 = Column(String(255), nullable=False, index=True)
+    drug_a = Column(String(255), nullable=False, index=True)
+    drug_b = Column(String(255), nullable=False, index=True)
     severity = Column(Enum(SeverityEnum), nullable=False)
     description = Column(Text)
     mechanism = Column(Text)

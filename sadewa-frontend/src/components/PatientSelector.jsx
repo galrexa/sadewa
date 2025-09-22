@@ -22,20 +22,47 @@ const PatientSelector = ({
     try {
       setLoading(true);
       const result = await apiService.getAllPatients();
-      setPatients(result.data);
+
+      // 🔍 DEBUG: Log response structure
+      console.log("📋 PatientSelector - API Response:", result);
+      console.log("📋 PatientSelector - result.data:", result.data);
+      console.log("📋 PatientSelector - result.patients:", result.patients);
+
+      // ✅ PERBAIKAN: Handle berbagai struktur response
+      let patientsData = [];
+
+      if (result.success && Array.isArray(result.data)) {
+        patientsData = result.data;
+        console.log("✅ Using result.data (success structure)");
+      } else if (result.patients && Array.isArray(result.patients)) {
+        patientsData = result.patients;
+        console.log("✅ Using result.patients (direct API structure)");
+      } else if (Array.isArray(result.data?.patients)) {
+        patientsData = result.data.patients;
+        console.log("✅ Using result.data.patients (nested structure)");
+      } else {
+        patientsData = [];
+        console.log("⚠️ No patients found in response, using empty array");
+      }
+
+      console.log(
+        `📊 PatientSelector - Setting ${patientsData.length} patients`
+      );
+      setPatients(patientsData);
       setError(null);
     } catch (err) {
+      console.error("❌ PatientSelector - fetchPatients error:", err);
       setError(err.message);
-      console.error("Error fetching patients:", err);
+      setPatients([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredPatients = patients.filter(
+  const filteredPatients = (Array.isArray(patients) ? patients : []).filter(
     (patient) =>
       patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      patient.id.toLowerCase().includes(searchTerm.toLowerCase())
+      patient.id.toString().toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handlePatientSelect = (patient) => {

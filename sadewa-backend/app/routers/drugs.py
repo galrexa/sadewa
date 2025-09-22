@@ -60,7 +60,6 @@ async def search_drugs(
                     nama_obat,
                     nama_obat_internasional,
                     is_active,
-                    created_at,
                     CASE 
                         WHEN LOWER(nama_obat) LIKE LOWER(:exact_match) THEN 4
                         WHEN LOWER(nama_obat_internasional) LIKE LOWER(:exact_match) THEN 3
@@ -91,7 +90,6 @@ async def search_drugs(
                     "nama_obat": row[1],
                     "nama_obat_internasional": row[2],
                     "is_active": row[3],
-                    "created_at": row[4]
                 })
             
             # Get total count
@@ -144,8 +142,7 @@ async def get_drug_by_name(name: str = Query(..., description="Exact drug name")
                 "id": row[0],
                 "nama_obat": row[1],
                 "nama_obat_internasional": row[2],
-                "is_active": row[3],
-                "created_at": row[4]
+                "is_active": row[3]
             }
         
         return {"drug": drug}

@@ -39,10 +39,10 @@ const PatientList = ({ onSelectPatient, onAddPatient, onEditPatient }) => {
       });
 
       if (search.trim()) {
-        params.append("search", search.trim());
+        params.append("q", search.trim());
       }
 
-      const response = await fetch(`/api/patients/?${params}`);
+      const response = await fetch(`/api/patients/search?${params}`);
 
       if (!response.ok) {
         throw new Error("Gagal mengambil data pasien");

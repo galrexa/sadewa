@@ -56,7 +56,7 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     setError("");
 
     try {
-      const response = await fetch("/api/patients/", {
+      const response = await fetch("/api/patients/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
