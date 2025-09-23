@@ -60,7 +60,7 @@ class MedicalRecordBase(BaseModel):
 
 class MedicalRecordCreate(MedicalRecordBase):
     """Schema to create a new medical record."""
-    patient_id: int = Field(..., description="ID pasien")
+    no_rm: str = Field(..., description="No Rekam Medis pasien")
 
 
 class MedicalRecordUpdate(BaseModel):
@@ -74,7 +74,7 @@ class MedicalRecordUpdate(BaseModel):
 class MedicalRecordResponse(BaseModel):
     """Schema for a medical record response."""
     id: int = Field(..., description="ID record")
-    patient_id: int = Field(..., description="ID pasien")
+    no_rm: str = Field(..., description="No Rekam Medis")
     diagnosis_code: Optional[str] = Field(None, description="Kode ICD-10")
     diagnosis_text: Optional[str] = Field(None, description="Teks diagnosis")
     medications: List[str] = Field(default_factory=list, description="Daftar obat")

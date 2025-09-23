@@ -17,6 +17,7 @@ from app.database import engine, get_database_stats, test_database_connection
 from app.routers.patients import router as patients_router
 from app.routers.medical_records import router as medical_records_router
 from app.routers.ai_diagnosis import router as ai_diagnosis_router
+from app.routers.interactions import router as interactions_router
 
 # Import existing routers
 from app.routers import drugs, icd10, interactions

@@ -1,487 +1,362 @@
-# app/routers/patients_optimized.py
-"""
-OPTIMIZED Patient Management API for SADEWA
-Priority: Registrasi Pasien + Fast Search + Validation
-"""
-
-import time
-import json
-from datetime import datetime
-from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
-from sqlalchemy import text
+# app/routers/patients.py
+from fastapi import APIRouter, HTTPException, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
-from pydantic import BaseModel, Field, field_validator
-
-from app.database import get_db
-from app.models import Patient, MedicalRecord, PatientMedication, PatientDiagnosis, PatientAllergy
+from sqlalchemy import text
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
+from datetime import datetime
+import json
 import logging
 
-# Setup logging
+from app.database import get_db
+
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# ===== PYDANTIC SCHEMAS =====
+# ===== SCHEMAS =====
 
-class PatientRegistration(BaseModel):
-    """Schema untuk registrasi pasien baru - OPTIMIZED"""
-    name: str = Field(..., min_length=2, max_length=100, description="Nama lengkap pasien")
-    age: int = Field(..., ge=0, le=150, description="Umur pasien")
-    # DIGANTI: 'regex' diubah menjadi 'pattern' untuk Pydantic v2
-    gender: str = Field(..., pattern="^(male|female)$", description="Jenis kelamin: male/female")
-    # DIGANTI: 'regex' diubah menjadi 'pattern' untuk Pydantic v2
-    phone: Optional[str] = Field(None, pattern="^[0-9+\\-\\s]{10,20}$", description="Nomor telepon")
-    weight_kg: Optional[int] = Field(None, ge=1, le=500, description="Berat badan (kg)")
-    
-    # Additional fields untuk AI profiling
-    medical_history: Optional[List[str]] = Field(default=[], description="Riwayat penyakit")
-    risk_factors: Optional[List[str]] = Field(default=[], description="Faktor risiko")
-    allergies: Optional[List[str]] = Field(default=[], description="Riwayat alergi")
-    
-    # DIGANTI: '@validator' diubah menjadi '@field_validator' untuk Pydantic v2
-    @field_validator('name')
-    @classmethod
-    def validate_name(cls, v):
-        if not v.strip():
-            raise ValueError('Nama tidak boleh kosong')
-        # Remove multiple spaces and titlecase
-        return ' '.join(v.split()).title()
-    
-    # DIGANTI: '@validator' diubah menjadi '@field_validator' untuk Pydantic v2
-    @field_validator('phone')
-    @classmethod
-    def validate_phone(cls, v):
-        if v:
-            # Remove spaces and dashes, keep only numbers and +
-            cleaned = ''.join(c for c in v if c.isdigit() or c == '+')
-            if len(cleaned) < 10:
-                raise ValueError('Nomor telepon terlalu pendek')
-        return v
-    
-class PatientUpdate(BaseModel):
-    """Schema untuk update data pasien"""
-    name: Optional[str] = Field(None, min_length=2, max_length=100)
-    age: Optional[int] = Field(None, ge=0, le=150)
-    # DIGANTI: 'regex' diubah menjadi 'pattern' untuk Pydantic v2
-    gender: Optional[str] = Field(None, pattern="^(male|female)$")
-    # DIGANTI: 'regex' diubah menjadi 'pattern' untuk Pydantic v2
-    phone: Optional[str] = Field(None, pattern="^[0-9+\\-\\s]{10,20}$")
-    weight_kg: Optional[int] = Field(None, ge=1, le=500)
-
-class PatientResponse(BaseModel):
-    """Schema response pasien"""
-    id: int
+class MedicationData(BaseModel):
+    """Schema untuk medication"""
     name: str
-    age: int
-    gender: str
-    phone: Optional[str] = None
-    weight_kg: Optional[int] = None
-    created_at: datetime
-    updated_at: datetime
-    
-    patient_code: str
-    age_category: str
-    bmi_category: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
+    dosage: str
+    frequency: str
+    notes: Optional[str] = ""
 
-class PatientSearchResult(BaseModel):
-    """Schema untuk hasil pencarian pasien"""
-    patients: List[PatientResponse]
-    total: int
-    page: int
-    limit: int
-    total_pages: int
-    search_query: Optional[str] = None
-    processing_time_ms: float
+class SaveDiagnosisRequest(BaseModel):
+    """Schema untuk save diagnosis"""
+    diagnosis_code: str = Field(..., description="ICD-10 code")
+    diagnosis_text: str = Field(..., description="Diagnosis description")
+    medications: List[MedicationData] = Field(default=[], description="Medications prescribed")
+    notes: Optional[str] = Field("", description="Additional notes")
+    interactions: Optional[Dict[str, Any]] = Field(None, description="Drug interaction analysis")
 
-# ===== UTILITY FUNCTIONS =====
+# ===== ENDPOINT =====
 
-def calculate_age_category(age: int) -> str:
-    """Kategorisasi umur untuk AI analysis"""
-    if age < 18:
-        return "child"
-    elif age < 65:
-        return "adult"
-    else:
-        return "elderly"
-
-def calculate_bmi_category(weight_kg: Optional[int], age: int) -> Optional[str]:
-    """Estimasi kategori BMI (simplified)"""
-    if not weight_kg or age < 18:
-        return None
-    
-    # Simplified BMI calculation (assume average height)
-    avg_height_m = 1.65  # Average Indonesian height
-    bmi = weight_kg / (avg_height_m ** 2)
-    
-    if bmi < 18.5:
-        return "underweight"
-    elif bmi < 25:
-        return "normal"
-    elif bmi < 30:
-        return "overweight"
-    else:
-        return "obese"
-
-def format_patient_response(patient_data: Dict[str, Any]) -> Dict[str, Any]:
-    patient_data['patient_code'] = patient_data['no_rm']
-    patient_data['age_category'] = calculate_age_category(patient_data['age'])
-    return patient_data
-
-def generate_no_rm(patient_id: int) -> str:
-    return f"rm{patient_id:04d}"
-
-async def create_patient_timeline_entry(
-    patient_id: int, 
-    event_type: str, 
-    event_data: Dict[str, Any],
-    db: Session
+@router.post("/patients/{no_rm}/save-diagnosis")
+async def save_diagnosis(
+    no_rm: str,
+    request: SaveDiagnosisRequest,
+    db: Session = Depends(get_db)
 ):
-    """Background task untuk mencatat timeline pasien"""
+    """
+    ✅ FIXED: Save diagnosis menggunakan no_rm saja (tanpa patient_id)
+    """
     try:
-        timeline_query = text("""
-            INSERT INTO patient_timeline (patient_id, event_type, event_date, event_data)
-            VALUES (:patient_id, :event_type, NOW(), :event_data)
+        logger.info(f"DEBUG - Received request for patient {no_rm}")
+        
+        # 1. Validate patient exists by no_rm
+        patient_query = text("SELECT no_rm, name FROM patients WHERE no_rm = :no_rm")
+        patient = db.execute(patient_query, {"no_rm": no_rm}).fetchone()
+        
+        if not patient:
+            logger.error(f"Patient {no_rm} not found")
+            raise HTTPException(status_code=404, detail=f"Patient {no_rm} not found")
+        
+        logger.info(f"DEBUG - Patient found: {patient.name}")
+        
+        # 2. Prepare medication data
+        medications_json = json.dumps([med.dict() for med in request.medications])
+        interactions_json = json.dumps(request.interactions) if request.interactions else None
+        
+        # 3. ✅ FIXED: Insert with no_rm only (no patient_id)
+        insert_query = text("""
+            INSERT INTO medical_records (
+                no_rm, 
+                diagnosis_code, 
+                diagnosis_text, 
+                medications, 
+                interactions, 
+                notes,
+                created_at,
+                updated_at
+            ) VALUES (
+                :no_rm, 
+                :diagnosis_code, 
+                :diagnosis_text, 
+                :medications, 
+                :interactions, 
+                :notes,
+                NOW(),
+                NOW()
+            )
         """)
         
-        db.execute(timeline_query, {
-            "patient_id": patient_id,
-            "event_type": event_type,
-            "event_data": str(event_data)  # Convert to JSON string
+        # Execute insert
+        result = db.execute(insert_query, {
+            "no_rm": no_rm,
+            "diagnosis_code": request.diagnosis_code,
+            "diagnosis_text": request.diagnosis_text,
+            "medications": medications_json,
+            "interactions": interactions_json,
+            "notes": request.notes
         })
-        db.commit()
-        logger.info(f"Timeline entry created for patient {patient_id}: {event_type}")
         
-    except Exception as e:
-        logger.error(f"Failed to create timeline entry: {e}")
-        db.rollback()
-
-# ===== API ENDPOINTS =====
-
-@router.post("/patients/register", response_model=PatientResponse, status_code=201)
-async def register_patient(patient_data: PatientRegistration, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
-    """OPTIMIZED Patient Registration Endpoint"""
-    start_time = time.time()
-    try:
-        if patient_data.phone:
-            duplicate_check = text("SELECT id, name FROM patients WHERE name = :name AND phone = :phone LIMIT 1")
-            duplicate = db.execute(duplicate_check, {"name": patient_data.name, "phone": patient_data.phone}).fetchone()
-            if duplicate:
-                raise HTTPException(status_code=409, detail=f"Pasien dengan nama '{duplicate.name}' dan nomor telepon yang sama sudah terdaftar (ID: {duplicate.id})")
-        
-        insert_query = text("INSERT INTO patients (name, age, gender, phone, weight_kg, created_at, updated_at) VALUES (:name, :age, :gender, :phone, :weight_kg, NOW(), NOW())")
-        result = db.execute(insert_query, patient_data.model_dump(include={'name', 'age', 'gender', 'phone', 'weight_kg'}))
-        new_patient_id = result.lastrowid
-        
-        if patient_data.allergies:
-            for allergen in patient_data.allergies:
-                allergy_query = text("INSERT INTO patient_allergies (patient_id, allergen, reaction_type) VALUES (:patient_id, :allergen, 'unknown')")
-                db.execute(allergy_query, {"patient_id": new_patient_id, "allergen": allergen})
-        
-        db.commit()
-        patient = db.execute(text("SELECT * FROM patients WHERE id = :patient_id"), {"patient_id": new_patient_id}).fetchone()
-        patient_dict = dict(patient._mapping)
-        formatted_patient = format_patient_response(patient_dict)
-        
-        background_tasks.add_task(create_patient_timeline_entry, new_patient_id, "registration", {"action": "patient_registered"}, db)
-        
-        return PatientResponse(**formatted_patient)
-    except IntegrityError as e:
-        db.rollback()
-        logger.error(f"Database integrity error during registration: {e}")
-        raise HTTPException(status_code=409, detail="Data pasien sudah ada atau konflik database")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"Database error during registration: {e}")
-        raise HTTPException(status_code=500, detail=f"Gagal mendaftarkan pasien: {str(e)}")
-
-@router.get("/patients/search", response_model=PatientSearchResult)
-async def search_patients(
-    # DIGANTI: 'regex' diubah menjadi 'pattern' untuk Pydantic v2
-    gender: Optional[str] = Query(None, pattern="^(male|female)$", description="Filter jenis kelamin"),
-    q: Optional[str] = Query(None, description="Search query (nama, ID, telepon)"),
-    age_min: Optional[int] = Query(None, ge=0, le=150, description="Umur minimum"),
-    age_max: Optional[int] = Query(None, ge=0, le=150, description="Umur maksimum"),
-    page: int = Query(1, ge=1, description="Halaman"),
-    limit: int = Query(20, ge=1, le=100, description="Jumlah per halaman"),
-    db: Session = Depends(get_db)
-):
-    """OPTIMIZED Patient Search dengan multiple filters"""
-    start_time = time.time()
-    try:
-        where_conditions, params = ["1=1"], {}
-        if q:
-            if q.startswith('P') and q[1:].isdigit():
-                where_conditions.append("id = :patient_id")
-                params["patient_id"] = int(q[1:])
-            elif q.isdigit():
-                where_conditions.append("(id = :search_id OR phone LIKE :phone_pattern)")
-                params.update({"search_id": int(q), "phone_pattern": f"%{q}%"})
-            else:
-                where_conditions.append("name LIKE :name_pattern")
-                params["name_pattern"] = f"%{q}%"
-        if gender:
-            where_conditions.append("gender = :gender")
-            params["gender"] = gender
-        if age_min is not None:
-            where_conditions.append("age >= :age_min")
-            params["age_min"] = age_min
-        if age_max is not None:
-            where_conditions.append("age <= :age_max")
-            params["age_max"] = age_max
-        
-        where_clause = " AND ".join(where_conditions)
-        count_query = text(f"SELECT COUNT(*) FROM patients WHERE {where_clause}")
-        total = db.execute(count_query, params).scalar()
-        
-        offset = (page - 1) * limit
-        total_pages = (total + limit - 1) // limit
-        
-        search_query = text(f"SELECT * FROM patients WHERE {where_clause} ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
-        params.update({"limit": limit, "offset": offset})
-        patients = db.execute(search_query, params).fetchall()
-        formatted_patients = [PatientResponse(**format_patient_response(dict(p._mapping))) for p in patients]
-        
-        return PatientSearchResult(
-            patients=formatted_patients,
-            total=total,
-            page=page,
-            limit=limit,
-            total_pages=total_pages,
-            search_query=q,
-            processing_time_ms=(time.time() - start_time) * 1000
-        )
-    except SQLAlchemyError as e:
-        logger.error(f"Database error during search: {e}")
-        raise HTTPException(status_code=500, detail=f"Gagal mencari pasien: {str(e)}")
-    
-@router.get("/patients/{patient_id}", response_model=PatientResponse)
-async def get_patient_detail(
-    patient_id: int,
-    include_timeline: bool = Query(False, description="Include patient timeline"),
-    db: Session = Depends(get_db)
-):
-    """
-    Get patient detail dengan optimasi
-    - Support patient code (P0001) atau ID langsung
-    - Optional timeline inclusion
-    - Fast lookup dengan index
-    """
-    try:
-        # Parse patient ID
-        if patient_id.startswith('P'):
-            numeric_id = int(patient_id[1:])
-        else:
-            numeric_id = int(patient_id)
-        
-        # Get patient data
-        patient_query = text("SELECT * FROM patients WHERE id = :patient_id")
-        patient = db.execute(patient_query, {"patient_id": numeric_id}).fetchone()
-        
-        if not patient:
-            raise HTTPException(status_code=404, detail="Pasien tidak ditemukan")
-        
-        # Format response
-        patient_dict = dict(patient._mapping)
-        formatted_patient = format_patient_response(patient_dict)
-        
-        response_data = PatientResponse(**formatted_patient)
-        
-        # Add timeline if requested
-        if include_timeline:
-            timeline_query = text("""
-                SELECT event_type, event_date, event_data 
-                FROM patient_timeline 
-                WHERE patient_id = :patient_id 
-                ORDER BY event_date DESC 
-                LIMIT 10
-            """)
-            timeline = db.execute(timeline_query, {"patient_id": numeric_id}).fetchall()
-            
-            # Add timeline to response (extend the model if needed)
-            response_data.timeline = [dict(t._mapping) for t in timeline]
-        
-        return response_data
-        
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Format ID pasien tidak valid")
-    except SQLAlchemyError as e:
-        logger.error(f"Database error getting patient {patient_id}: {e}")
-        raise HTTPException(status_code=500, detail="Gagal mengambil data pasien")
-
-@router.put("/patients/{patient_id}", response_model=PatientResponse)
-async def update_patient(
-    patient_id: int,
-    update_data: PatientUpdate,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
-):
-    """
-    Update patient data dengan audit trail
-    """
-    try:
-        # Parse patient ID
-        if patient_id.startswith('P'):
-            numeric_id = int(patient_id[1:])
-        else:
-            numeric_id = int(patient_id)
-        
-        # Check if patient exists
-        existing = db.execute(
-            text("SELECT * FROM patients WHERE id = :patient_id"),
-            {"patient_id": numeric_id}
-        ).fetchone()
-        
-        if not existing:
-            raise HTTPException(status_code=404, detail="Pasien tidak ditemukan")
-        
-        # Build update query
-        update_fields = []
-        params = {"patient_id": numeric_id}
-        
-        for field, value in update_data.dict(exclude_unset=True).items():
-            if value is not None:
-                update_fields.append(f"{field} = :{field}")
-                params[field] = value
-        
-        if not update_fields:
-            raise HTTPException(status_code=400, detail="Tidak ada data yang diubah")
-        
-        # Execute update
-        update_query = text(f"""
-            UPDATE patients 
-            SET {', '.join(update_fields)}, updated_at = NOW()
-            WHERE id = :patient_id
-        """)
-        
-        db.execute(update_query, params)
+        new_record_id = result.lastrowid
         db.commit()
         
-        # Get updated data
-        updated_patient = db.execute(
-            text("SELECT * FROM patients WHERE id = :patient_id"),
-            {"patient_id": numeric_id}
-        ).fetchone()
+        logger.info(f"DEBUG - Medical record saved with ID: {new_record_id}")
         
-        # Format response
-        patient_dict = dict(updated_patient._mapping)
-        formatted_patient = format_patient_response(patient_dict)
+        # 4. ✅ NEW: Also add medications to patient_medications table
+        if request.medications:
+            try:
+                await save_patient_medications(no_rm, request.medications, new_record_id, db)
+                logger.info(f"DEBUG - {len(request.medications)} medications added to patient_medications")
+            except Exception as med_error:
+                logger.warning(f"Failed to save patient medications: {med_error}")
+                # Don't fail the whole request if medication saving fails
         
-        # Background task for timeline
-        background_tasks.add_task(
-            create_patient_timeline_entry,
-            numeric_id,
-            "update",
-            {"action": "patient_updated", "changes": update_data.dict(exclude_unset=True)},
-            db
-        )
-        
-        return PatientResponse(**formatted_patient)
-        
-    except ValueError:
-        raise HTTPException(status_code=400, detail="Format ID pasien tidak valid")
-    except SQLAlchemyError as e:
-        db.rollback()
-        logger.error(f"Database error updating patient {patient_id}: {e}")
-        raise HTTPException(status_code=500, detail="Gagal mengupdate data pasien")
-
-@router.post("/patients/{patient_id}/save-diagnosis")
-async def save_patient_diagnosis(
-    patient_id: str,
-    diagnosis_data: dict,
-    db: Session = Depends(get_db)
-):
-    try:
-        print(f"DEBUG - Received request for patient {patient_id}")
-        
-        # Validate patient exists
-        patient = db.query(Patient).filter(Patient.no_rm == patient_id).first()
-        if not patient:
-            raise HTTPException(status_code=404, detail=f"Patient {patient_id} not found")
-        
-        # Extract medications properly
-        medications_data = diagnosis_data.get('medications', [])
-        
-        # Process medications: extract only essential fields
-        processed_medications = []
-        for med in medications_data:
-            if isinstance(med, dict):
-                processed_medications.append({
-                    "name": med.get('name', ''),
-                    "dosage": med.get('dosage', ''),
-                    "frequency": med.get('frequency', ''),
-                    "notes": med.get('notes', '')
-                })
-            else:
-                # If medication is string, keep as is
-                processed_medications.append(str(med))
-        
-        # Create medical record with proper JSON structure
-        new_record = MedicalRecord(
-            no_rm=patient_id,
-            diagnosis_code=diagnosis_data.get('diagnosis_code'),
-            diagnosis_text=diagnosis_data.get('diagnosis_text'),
-            medications=processed_medications,  # Let SQLAlchemy handle JSON conversion
-            interactions=diagnosis_data.get('interaction_results'),  # Store full interaction results
-            notes=diagnosis_data.get('notes'),
-        )
-        
-        db.add(new_record)
-        db.commit()
-        
-        print(f"DEBUG - Successfully saved medical record")
-        
-        return {"success": True, "message": "Diagnosis saved successfully", "record_id": new_record.id}
-        
-    except Exception as e:
-        print(f"ERROR - {str(e)}")
-        db.rollback()
-        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
-
-@router.get("/patients/stats/summary")
-async def get_patient_statistics(db: Session = Depends(get_db)):
-    """
-    Get patient statistics untuk dashboard
-    """
-    try:
-        stats_query = text("""
-            SELECT 
-                COUNT(*) as total_patients,
-                COUNT(CASE WHEN gender = 'male' THEN 1 END) as male_count,
-                COUNT(CASE WHEN gender = 'female' THEN 1 END) as female_count,
-                COUNT(CASE WHEN age < 18 THEN 1 END) as children_count,
-                COUNT(CASE WHEN age >= 18 AND age < 65 THEN 1 END) as adult_count,
-                COUNT(CASE WHEN age >= 65 THEN 1 END) as elderly_count,
-                AVG(age) as average_age,
-                COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) THEN 1 END) as new_this_week,
-                COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as new_this_month
-            FROM patients
-        """)
-        
-        stats = db.execute(stats_query).fetchone()
-        
+        # 5. Return success response
         return {
-            "total_patients": stats.total_patients,
-            "gender_distribution": {
-                "male": stats.male_count,
-                "female": stats.female_count
+            "success": True,
+            "message": "Diagnosis saved successfully",
+            "medical_record_id": new_record_id,
+            "patient_no_rm": no_rm,
+            "diagnosis": {
+                "code": request.diagnosis_code,
+                "text": request.diagnosis_text
             },
-            "age_distribution": {
-                "children": stats.children_count,
-                "adults": stats.adult_count,
-                "elderly": stats.elderly_count
-            },
-            "average_age": round(float(stats.average_age), 1) if stats.average_age else 0,
-            "registrations": {
-                "this_week": stats.new_this_week,
-                "this_month": stats.new_this_month
-            },
-            "generated_at": datetime.now().isoformat()
+            "medications_count": len(request.medications),
+            "timestamp": datetime.now().isoformat()
         }
         
-    except SQLAlchemyError as e:
-        logger.error(f"Database error getting patient stats: {e}")
-        raise HTTPException(status_code=500, detail="Gagal mengambil statistik pasien")
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except Exception as e:
+        logger.error(f"ERROR - Save diagnosis failed for {no_rm}: {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to save diagnosis: {str(e)}")
+
+async def save_patient_medications(
+    no_rm: str, 
+    medications: List[MedicationData], 
+    medical_record_id: int, 
+    db: Session
+):
+    """Save medications to patient_medications table"""
+    try:
+        for med in medications:
+            # Insert or update patient medication
+            medication_query = text("""
+                INSERT INTO patient_medications (
+                    no_rm, 
+                    medication_name, 
+                    dosage, 
+                    frequency, 
+                    status, 
+                    prescribed_by, 
+                    medical_record_id,
+                    notes,
+                    start_date,
+                    created_at
+                ) VALUES (
+                    :no_rm, 
+                    :medication_name, 
+                    :dosage, 
+                    :frequency, 
+                    'active', 
+                    'System', 
+                    :medical_record_id,
+                    :notes,
+                    CURDATE(),
+                    NOW()
+                )
+                ON DUPLICATE KEY UPDATE
+                    dosage = VALUES(dosage),
+                    frequency = VALUES(frequency),
+                    medical_record_id = VALUES(medical_record_id),
+                    status = 'active',
+                    updated_at = NOW()
+            """)
+            
+            db.execute(medication_query, {
+                "no_rm": no_rm,
+                "medication_name": med.name,
+                "dosage": med.dosage,
+                "frequency": med.frequency,
+                "medical_record_id": medical_record_id,
+                "notes": med.notes
+            })
+        
+        db.commit()
+        logger.info(f"Successfully saved {len(medications)} medications for patient {no_rm}")
+        
+    except Exception as e:
+        logger.error(f"Failed to save medications for {no_rm}: {e}")
+        db.rollback()
+        raise
+
+# ===== ADDITIONAL HELPER ENDPOINTS =====
+
+@router.get("/patients/{no_rm}/medical-history")
+async def get_patient_medical_history(
+    no_rm: str,
+    limit: int = 10,
+    db: Session = Depends(get_db)
+):
+    """Get patient medical history using no_rm"""
+    try:
+        # Get patient info
+        patient_query = text("SELECT no_rm, name FROM patients WHERE no_rm = :no_rm")
+        patient = db.execute(patient_query, {"no_rm": no_rm}).fetchone()
+        
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {no_rm} not found")
+        
+        # Get medical records
+        records_query = text("""
+            SELECT 
+                mr.id,
+                mr.diagnosis_code,
+                mr.diagnosis_text,
+                mr.medications,
+                mr.interactions,
+                mr.notes,
+                mr.created_at,
+                mr.updated_at
+            FROM medical_records mr
+            WHERE mr.no_rm = :no_rm
+            ORDER BY mr.created_at DESC
+            LIMIT :limit
+        """)
+        
+        records = db.execute(records_query, {"no_rm": no_rm, "limit": limit}).fetchall()
+        
+        # Format records
+        formatted_records = []
+        for record in records:
+            medications = json.loads(record.medications) if record.medications else []
+            interactions = json.loads(record.interactions) if record.interactions else {}
+            
+            formatted_records.append({
+                "id": record.id,
+                "diagnosis_code": record.diagnosis_code,
+                "diagnosis_text": record.diagnosis_text,
+                "medications": medications,
+                "interactions": interactions,
+                "notes": record.notes,
+                "created_at": record.created_at.isoformat() if record.created_at else None,
+                "updated_at": record.updated_at.isoformat() if record.updated_at else None
+            })
+        
+        return {
+            "success": True,
+            "patient": {
+                "no_rm": patient.no_rm,
+                "name": patient.name
+            },
+            "medical_records": formatted_records,
+            "total_records": len(formatted_records)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get medical history for {no_rm}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get medical history: {str(e)}")
+
+@router.get("/patients/{no_rm}/current-medications")
+async def get_current_medications(
+    no_rm: str,
+    db: Session = Depends(get_db)
+):
+    """Get current active medications for patient"""
+    try:
+        # Validate patient exists
+        patient_query = text("SELECT no_rm, name FROM patients WHERE no_rm = :no_rm")
+        patient = db.execute(patient_query, {"no_rm": no_rm}).fetchone()
+        
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {no_rm} not found")
+        
+        # Get current medications
+        medications_query = text("""
+            SELECT 
+                id,
+                medication_name,
+                dosage,
+                frequency,
+                start_date,
+                end_date,
+                status,
+                prescribed_by,
+                notes,
+                created_at
+            FROM patient_medications
+            WHERE no_rm = :no_rm 
+              AND status = 'active'
+              AND (end_date IS NULL OR end_date > CURDATE())
+            ORDER BY start_date DESC
+        """)
+        
+        medications = db.execute(medications_query, {"no_rm": no_rm}).fetchall()
+        
+        # Format medications
+        formatted_medications = []
+        for med in medications:
+            formatted_medications.append({
+                "id": med.id,
+                "name": med.medication_name,
+                "dosage": med.dosage,
+                "frequency": med.frequency,
+                "start_date": med.start_date.isoformat() if med.start_date else None,
+                "end_date": med.end_date.isoformat() if med.end_date else None,
+                "status": med.status,
+                "prescribed_by": med.prescribed_by,
+                "notes": med.notes,
+                "created_at": med.created_at.isoformat() if med.created_at else None
+            })
+        
+        return {
+            "success": True,
+            "patient": {
+                "no_rm": patient.no_rm,
+                "name": patient.name
+            },
+            "current_medications": formatted_medications,
+            "total_medications": len(formatted_medications)
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to get current medications for {no_rm}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get current medications: {str(e)}")
+
+# ===== TESTING ENDPOINT =====
+
+@router.post("/test-save-diagnosis")
+async def test_save_diagnosis(db: Session = Depends(get_db)):
+    """Test save diagnosis endpoint"""
+    try:
+        # Create test request
+        test_request = SaveDiagnosisRequest(
+            diagnosis_code="G43.0",
+            diagnosis_text="Migraine without aura",
+            medications=[
+                MedicationData(
+                    name="Paracetamol",
+                    dosage="500mg",
+                    frequency="3x daily",
+                    notes="Take after meals"
+                )
+            ],
+            notes="Test diagnosis from API",
+            interactions={"test": "interaction_data"}
+        )
+        
+        # Use test patient
+        test_no_rm = "rm0001"
+        
+        result = await save_diagnosis(test_no_rm, test_request, db)
+        
+        return {
+            "test_status": "success",
+            "result": result
+        }
+        
+    except Exception as e:
+        return {
+            "test_status": "failed",
+            "error": str(e)
+        }
