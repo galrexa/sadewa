@@ -261,8 +261,9 @@ async def get_patient_by_no_rm(
     no_rm: str,
     db: Session = Depends(get_db)
 ):
-    """Get patient details by no_rm"""
+    """Get patient details by no_rm WITH medical records"""
     try:
+        # Get patient basic info
         patient_query = text("""
             SELECT id, no_rm, name, age, gender, phone, weight_kg,
                    medical_history, risk_factors, last_ai_analysis, ai_risk_score,
@@ -291,6 +292,37 @@ async def get_patient_by_no_rm(
                 risk_factors = json.loads(patient.risk_factors) if isinstance(patient.risk_factors, str) else patient.risk_factors
             except (json.JSONDecodeError, TypeError):
                 risk_factors = None
+
+        # ✅ ADDED: Get medical records
+        records_query = text("""
+            SELECT 
+                id, no_rm, diagnosis_code, diagnosis_text, medications, 
+                interactions, notes, created_at, updated_at
+            FROM medical_records 
+            WHERE no_rm = :no_rm
+            ORDER BY created_at DESC
+            LIMIT 50
+        """)
+        
+        records = db.execute(records_query, {"no_rm": no_rm}).fetchall()
+        
+        # Format medical records
+        medical_records = []
+        for record in records:
+            medications = json.loads(record.medications) if record.medications else []
+            interactions = json.loads(record.interactions) if record.interactions else {}
+            
+            medical_records.append({
+                "id": record.id,
+                "no_rm": record.no_rm,
+                "diagnosis_code": record.diagnosis_code,
+                "diagnosis_text": record.diagnosis_text,
+                "medications": medications,
+                "interactions": interactions,
+                "notes": record.notes,
+                "created_at": record.created_at.isoformat() if record.created_at else None,
+                "updated_at": record.updated_at.isoformat() if record.updated_at else None
+            })
         
         patient_data = {
             "id": patient.id,
@@ -305,10 +337,11 @@ async def get_patient_by_no_rm(
             "last_ai_analysis": patient.last_ai_analysis.isoformat() if patient.last_ai_analysis else None,
             "ai_risk_score": float(patient.ai_risk_score) if patient.ai_risk_score else None,
             "created_at": patient.created_at.isoformat() if patient.created_at else None,
-            "updated_at": patient.updated_at.isoformat() if patient.updated_at else None
+            "updated_at": patient.updated_at.isoformat() if patient.updated_at else None,
+            "medical_records": medical_records  # ✅ ADDED: Include medical records
         }
         
-        logger.info(f"✅ Found patient {no_rm}: {patient.name}")
+        logger.info(f"✅ Found patient {no_rm}: {patient.name} with {len(medical_records)} medical records")
         return {"success": True, "data": patient_data}
         
     except HTTPException:
