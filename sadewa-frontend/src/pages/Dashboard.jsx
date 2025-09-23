@@ -50,8 +50,35 @@ const Dashboard = () => {
   }, [activeTab]);
 
   // Existing handlers
-  const handlePatientSelect = (patient) => {
+  const handlePatientSelect = async (patient) => {
+    console.log("🔄 Loading patient data:", patient);
     setSelectedPatient(patient);
+
+    // Load current medications from database
+    try {
+      const result = await apiService.getCurrentMedications(
+        patient.no_rm || patient.id
+      );
+      if (result.success && result.current_medications) {
+        // Format medications for MedicationInput component
+        const formattedMedications = result.current_medications.map((med) => ({
+          id: med.id || Date.now() + Math.random(),
+          name: med.name || med.medication_name,
+          dosage: med.dosage || "",
+          frequency: med.frequency || "",
+          notes: med.notes || "",
+        }));
+
+        console.log("✅ Loaded medications:", formattedMedications);
+        setMedications(formattedMedications);
+      } else {
+        console.log("ℹ️ No current medications found");
+        setMedications([]);
+      }
+    } catch (error) {
+      console.error("❌ Failed to load current medications:", error);
+      setMedications([]); // Reset to empty if failed
+    }
   };
 
   const handleAddPatient = () => {
@@ -356,10 +383,6 @@ const Dashboard = () => {
         );
 
       default: // dashboard
-        console.log(
-          "DEBUG Dashboard default - selectedPatient:",
-          selectedPatient
-        );
         return (
           <div className="max-w-6xl mx-auto">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">
@@ -375,6 +398,7 @@ const Dashboard = () => {
                   <PatientSelector
                     selectedPatient={selectedPatient}
                     onPatientSelect={handlePatientSelect}
+                    currentMedications={medications}
                   />
                 </div>
 

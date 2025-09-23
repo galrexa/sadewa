@@ -40,7 +40,6 @@ api.interceptors.request.use(
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
-    console.log(`API Response: ${response.status} ${response.config.url}`);
     if (response.data) {
       console.log("Response Data:", response.data);
     }
@@ -192,6 +191,22 @@ export const apiService = {
     }
   },
 
+  // Tambahkan di object apiService:
+  async getCurrentMedications(patientId) {
+    try {
+      const response = await api.get(
+        `/api/patients/${patientId}/current-medications`
+      );
+      console.log("Current medications response:", response.data);
+      return { success: true, ...response.data };
+    } catch (error) {
+      console.error("Failed to get current medications:", error);
+      return {
+        success: false,
+        error: error.response?.data?.detail || error.message,
+      };
+    }
+  },
   // Drug interaction analysis
   async analyzeInteractions(payload) {
     try {

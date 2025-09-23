@@ -51,7 +51,7 @@ const InteractionResults = ({
 
     try {
       const payload = {
-        patient_id: patient.id,
+        patient_id: selectedPatient?.no_rm,
         new_medications: medications.map((med) => `${med.name} ${med.dosage}`),
         diagnoses: diagnoses.map((d) => d.code),
         notes: `Analysis for ${patient.name} (${patient.age}y, ${patient.gender})`,

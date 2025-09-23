@@ -20,13 +20,13 @@ const SaveDiagnosisButton = ({
   onSuccess,
   disabled = false,
 }) => {
-  console.log("DEBUG SaveDiagnosisButton:", {
-    selectedPatient,
-    medications,
-    medicationsLength: medications.length,
-    disabled,
-    shouldBeDisabled: disabled || medications.length === 0 || !selectedPatient,
-  });
+  // console.log("DEBUG SaveDiagnosisButton:", {
+  //   selectedPatient,
+  //   medications,
+  //   medicationsLength: medications.length,
+  //   disabled,
+  //   shouldBeDisabled: disabled || medications.length === 0 || !selectedPatient,
+  // });
   const [showModal, setShowModal] = useState(false);
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
@@ -48,12 +48,16 @@ const SaveDiagnosisButton = ({
 
     try {
       const payload = {
-        patient_id: selectedPatient?.patient_code || selectedPatient?.no_rm,
-        diagnosis_code: diagnosisData?.code || null,
-        diagnosis_text: diagnosisData?.name_id || diagnosisData?.text || null,
-        medications: medications,
-        interaction_results: interactionResults,
-        notes: notes.trim() || null,
+        diagnosis_code: diagnosisData?.code || "", // REQUIRED field, can't be null
+        diagnosis_text: diagnosisData?.name_id || diagnosisData?.text || "", // REQUIRED field
+        medications: medications.map((med) => ({
+          name: med.name,
+          dosage: med.dosage || "",
+          frequency: med.frequency || "",
+          notes: med.notes || "",
+        })),
+        notes: notes.trim() || "",
+        interactions: interactionResults, // Change from interaction_results to interactions
       };
 
       console.log("Saving diagnosis with payload:", payload);

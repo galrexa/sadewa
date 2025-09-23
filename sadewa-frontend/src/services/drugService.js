@@ -5,8 +5,6 @@ export const drugService = {
   // Search drugs in database with autocomplete
   async searchDrugs(query, limit = 10) {
     try {
-      console.log("🔍 Searching drugs:", { query, limit });
-
       if (!query || query.length < 1) {
         return { success: true, data: [] };
       }
@@ -18,40 +16,13 @@ export const drugService = {
         },
       });
 
-      console.log("✅ Drug search result:", response.data);
-
       return {
         success: true,
         data: response.data.drugs || [],
       };
     } catch (error) {
-      console.error("❌ Drug search failed:", error);
-
-      // Fallback to mock data for development
-      const mockDrugs = [
-        {
-          id: 1,
-          nama_obat: "Paracetamol",
-          nama_obat_internasional: "Acetaminophen",
-          is_active: true,
-        },
-        {
-          id: 2,
-          nama_obat: "Ibuprofen",
-          nama_obat_internasional: "Ibuprofen",
-          is_active: true,
-        },
-      ].filter(
-        (drug) =>
-          drug.nama_obat.toLowerCase().includes(query.toLowerCase()) ||
-          drug.nama_obat_internasional
-            .toLowerCase()
-            .includes(query.toLowerCase())
-      );
-
       return {
         success: true,
-        data: mockDrugs,
       };
     }
   },
@@ -59,8 +30,6 @@ export const drugService = {
   // Get drug by exact name
   async getDrugByName(drugName) {
     try {
-      console.log("🔍 Getting drug by name:", drugName);
-
       const response = await apiService.api.get("/api/drugs/by-name", {
         params: { name: drugName.trim() },
       });
@@ -106,8 +75,6 @@ export const drugService = {
   // Check drug-drug interactions
   async checkDrugInteractions(drugNames = []) {
     try {
-      console.log("🔍 Checking drug interactions:", drugNames);
-
       if (!drugNames || drugNames.length < 2) {
         return {
           success: true,
@@ -127,7 +94,6 @@ export const drugService = {
         }
       );
 
-      console.log("✅ Drug interaction result:", response.data);
       return { success: true, data: response.data };
     } catch (error) {
       console.error("❌ Drug interaction check failed:", error);
@@ -248,8 +214,6 @@ export const drugService = {
   // Get popular/common drugs
   async getPopularDrugs(limit = 10) {
     try {
-      console.log("🔍 Getting popular drugs");
-
       const response = await apiService.api.get("/api/drugs/popular", {
         params: { limit },
       });
@@ -279,11 +243,7 @@ export const drugService = {
   // Get drug database statistics
   async getDrugStats() {
     try {
-      console.log("📊 Getting drug statistics");
-
       const response = await apiService.api.get("/api/drugs/stats");
-      console.log("✅ Drug stats:", response.data);
-
       return { success: true, data: response.data };
     } catch (error) {
       console.error("❌ Drug stats failed:", error);
@@ -308,8 +268,6 @@ export const drugService = {
         includeInactive = false,
         searchInternational = true,
       } = options;
-
-      console.log("🔍 Advanced drug search:", options);
 
       const params = {
         q: query.trim(),

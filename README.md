@@ -275,7 +275,7 @@ GET /api/icd10/search?q=diabetes&limit=10
 # Drug Interaction Analysis
 POST /api/analyze-interactions
 {
-  "patient_id": "P001",
+  "no_rm": "rm0001",
   "new_medications": ["Ibuprofen 400mg"],
   "diagnoses": ["I48.0"],
   "notes": "Patient complaint of knee pain"

@@ -6,6 +6,7 @@ import { apiService } from "../services/api";
 const PatientSelector = ({
   selectedPatient,
   onPatientSelect,
+  currentMedications = [],
   className = "",
 }) => {
   const [patients, setPatients] = useState([]);
@@ -22,11 +23,6 @@ const PatientSelector = ({
     try {
       setLoading(true);
       const result = await apiService.getAllPatients();
-
-      // 🔍 DEBUG: Log response structure
-      console.log("📋 PatientSelector - API Response:", result);
-      console.log("📋 PatientSelector - result.data:", result.data);
-      console.log("📋 PatientSelector - result.patients:", result.patients);
 
       // ✅ PERBAIKAN: Handle berbagai struktur response
       let patientsData = [];
@@ -208,15 +204,16 @@ const PatientSelector = ({
           <h3 className="font-medium text-primary-900 mb-2">
             Current Medications
           </h3>
-          {selectedPatient.current_medications &&
-          selectedPatient.current_medications.length > 0 ? (
+          {currentMedications && currentMedications.length > 0 ? (
             <div className="space-y-1">
-              {selectedPatient.current_medications.map((med, index) => (
+              {currentMedications.map((medication, index) => (
                 <div
                   key={index}
                   className="text-sm text-primary-700 bg-white px-2 py-1 rounded"
                 >
-                  💊 {med}
+                  💊 {medication.name}{" "}
+                  {medication.dosage && `- ${medication.dosage}`}{" "}
+                  {medication.frequency && `(${medication.frequency})`}
                 </div>
               ))}
             </div>
