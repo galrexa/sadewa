@@ -23,9 +23,9 @@ class SeverityEnum(str, Enum):
     MINOR = "MINOR"
 
 class MedicationStatusEnum(str, Enum):
-    ACTIVE = "active"
-    DISCONTINUED = "discontinued"
-    COMPLETED = "completed"
+    ACTIVE = "ACTIVE"
+    DISCONTINUED = "DISCONTINUED"
+    COMPLETED = "COMPLETED"
 
 class EventTypeEnum(str, Enum):
     REGISTRATION = "registration"

@@ -31,9 +31,8 @@ class MedicationData(BaseModel):
     notes: Optional[str] = Field("", description="Catatan obat")
 
 class SaveDiagnosisRequest(BaseModel):
-    """Schema untuk save diagnosis"""
-    diagnosis_code: str = Field(..., description="ICD-10 code")
-    diagnosis_text: str = Field(..., description="Diagnosis description")
+    diagnosis_code: Optional[str] = Field("", description="ICD-10 code")
+    diagnosis_text: Optional[str] = Field("", description="Diagnosis description")
     medications: List[MedicationData] = Field(default=[], description="Medications prescribed")
     notes: Optional[str] = Field("", description="Additional notes")
     interactions: Optional[Dict[str, Any]] = Field(None, description="Drug interaction analysis")
@@ -175,31 +174,28 @@ async def save_patient_medications_fixed(
         for med in medications:
             medication_query = text("""
                 INSERT INTO patient_medications (
-                    no_rm, 
-                    medication_name, 
-                    dosage, 
-                    frequency, 
-                    is_active,
-                    created_at
+                    no_rm, medication_name, dosage, frequency,
+                    medical_record_id, notes, status,
+                    start_date, created_at, updated_at
                 ) VALUES (
-                    :no_rm, 
-                    :medication_name, 
-                    :dosage, 
-                    :frequency, 
-                    1,
-                    NOW()
+                    :no_rm, :medication_name, :dosage, :frequency,
+                    :medical_record_id, :notes, 'ACTIVE',
+                    NOW(), NOW(), NOW()
                 )
                 ON DUPLICATE KEY UPDATE
                     dosage = VALUES(dosage),
                     frequency = VALUES(frequency),
-                    is_active = 1
+                    notes = VALUES(notes),
+                    updated_at = NOW()
             """)
             
             db.execute(medication_query, {
                 "no_rm": no_rm,
                 "medication_name": med.name,
                 "dosage": med.dosage,
-                "frequency": med.frequency
+                "frequency": med.frequency,
+                "medical_record_id": medical_record_id,
+                "notes": med.notes
             })
         
         db.commit()

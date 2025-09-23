@@ -17,7 +17,7 @@ from app.database import engine, get_database_stats, test_database_connection
 from app.routers.patients import router as patients_router
 from app.routers.medical_records import router as medical_records_router
 from app.routers.ai_diagnosis import router as ai_diagnosis_router
-# from app.routers.interactions import router as interactions_router
+from app.routers.interactions import router as interactions_router
 
 # Import existing routers
 from app.routers import drugs, icd10, interactions
@@ -220,13 +220,11 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError):
         }
     )
 
-# ===== ROUTER INCLUSION =====
-
 app.include_router(patients_router, prefix="/api", tags=["Patients"])
 app.include_router(medical_records_router, prefix="/api", tags=["Medical Records"])
 app.include_router(ai_diagnosis_router, prefix="/api", tags=["AI Diagnosis"])
 app.include_router(icd10.router, prefix="/api/icd10", tags=["ICD10"])
-app.include_router(interactions.router, prefix="/api", tags=["Interactions"])
+app.include_router(interactions_router, prefix="/api", tags=["Interactions"])
 app.include_router(drugs.router, prefix="/api/drugs", tags=["Drugs"])
 
 # ===== ROOT & HEALTH ENDPOINTS =====

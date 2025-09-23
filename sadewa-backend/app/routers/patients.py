@@ -836,14 +836,19 @@ async def _save_patient_medications(
         for med in medications:
             insert_medication_query = text("""
                 INSERT INTO patient_medications (
-                    no_rm, medication_name, dosage, frequency, 
-                    medical_record_id, notes, status, 
+                    no_rm, medication_name, dosage, frequency,
+                    medical_record_id, notes, status,
                     start_date, created_at, updated_at
                 ) VALUES (
                     :no_rm, :medication_name, :dosage, :frequency,
-                    :medical_record_id, :notes, 'active',
+                    :medical_record_id, :notes, 'ACTIVE',
                     NOW(), NOW(), NOW()
                 )
+                ON DUPLICATE KEY UPDATE
+                    dosage = VALUES(dosage),
+                    frequency = VALUES(frequency),
+                    notes = VALUES(notes),
+                    updated_at = NOW()
             """)
             
             db.execute(insert_medication_query, {
