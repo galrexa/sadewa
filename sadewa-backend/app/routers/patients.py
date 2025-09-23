@@ -125,14 +125,12 @@ def calculate_bmi_category(weight_kg: Optional[int], age: int) -> Optional[str]:
         return "obese"
 
 def format_patient_response(patient_data: Dict[str, Any]) -> Dict[str, Any]:
-    """Format patient data dengan informasi tambahan"""
-    patient_data['patient_code'] = patient_data['id']
+    patient_data['patient_code'] = patient_data['no_rm']
     patient_data['age_category'] = calculate_age_category(patient_data['age'])
-    patient_data['bmi_category'] = calculate_bmi_category(
-        patient_data.get('weight_kg'), 
-        patient_data['age']
-    )
     return patient_data
+
+def generate_no_rm(patient_id: int) -> str:
+    return f"rm{patient_id:04d}"
 
 async def create_patient_timeline_entry(
     patient_id: int, 
@@ -243,7 +241,6 @@ async def search_patients(
         search_query = text(f"SELECT * FROM patients WHERE {where_clause} ORDER BY created_at DESC LIMIT :limit OFFSET :offset")
         params.update({"limit": limit, "offset": offset})
         patients = db.execute(search_query, params).fetchall()
-        
         formatted_patients = [PatientResponse(**format_patient_response(dict(p._mapping))) for p in patients]
         
         return PatientSearchResult(

@@ -74,6 +74,7 @@ async def load_patients(db: Session) -> List[Dict]:
         result = [
             {
                 "id": patient.id,
+                "no_rm": patient.no_rm,
                 "name": patient.name,
                 "age": patient.age,
                 "gender": patient.gender.value,
@@ -343,7 +344,7 @@ async def analyze_interactions(
             drug_interactions_db = load_drug_interactions_from_json()
             data_source = "json_fallback"
 
-        patient_data = next((p for p in patients if p["id"] == request.patient_id), None)
+        patient_data = next((p for p in patients if p.get("no_rm") == request.patient_id or str(p.get("id")) == str(request.patient_id)), None)
         if not patient_data:
             raise HTTPException(
                 status_code=404,

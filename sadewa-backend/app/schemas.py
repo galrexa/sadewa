@@ -35,7 +35,8 @@ class PatientUpdate(BaseModel):
 
 class PatientResponse(BaseModel):
     """Schema for patient data response."""
-    id: int = Field(..., description="ID pasien")
+    no_rm: str = Field(..., description="Nomor Rekam Medis")
+    id: int = Field(..., description="ID Legacy")
     name: str = Field(..., description="Nama pasien")
     age: int = Field(..., description="Umur pasien")
     gender: str = Field(..., description="Jenis kelamin")
@@ -113,8 +114,6 @@ class SaveDiagnosisRequest(BaseModel):
     interaction_results: Optional[Dict] = Field(None, description="Hasil analisis interaksi")
     notes: Optional[str] = Field(None, description="Catatan klinis")
 
-
-# === ICD10 SCHEMAS (for compatibility) ===
 class ICD10Result(BaseModel):
     """Schema for ICD-10 search results."""
     code: str = Field(..., description="Kode ICD-10")
@@ -140,8 +139,7 @@ class DrugSearchResponse(BaseModel):
 
 # === INTERACTION SCHEMAS (for compatibility) ===
 class InteractionRequest(BaseModel):
-    """Schema for a drug interaction analysis request."""
-    patient_id: int = Field(..., description="ID pasien")
+    patient_id: str = Field(..., description="Nomor Rekam Medis pasien")  # String sekarang
     new_medications: List[str] = Field(..., description="List obat baru")
     diagnoses: Optional[List[str]] = Field(None, description="List ICD-10 codes")
     notes: Optional[str] = Field(None, description="Catatan tambahan")
@@ -168,7 +166,6 @@ class Contraindication(BaseModel):
 
 
 class DosingAdjustment(BaseModel):
-    """Schema for dosing adjustment details."""
     drug: str = Field(..., description="Nama obat")
     standard_dose: str = Field(..., description="Dosis standar")
     recommended_dose: str = Field(..., description="Dosis yang direkomendasikan")
@@ -176,9 +173,8 @@ class DosingAdjustment(BaseModel):
 
 
 class InteractionResponse(BaseModel):
-    """Schema for the interaction analysis response."""
     analysis_timestamp: str = Field(..., description="Timestamp analisis")
-    patient_id: int = Field(..., description="ID pasien")
+    patient_id: str = Field(..., description="Nomor Rekam Medis pasien")
     overall_risk_level: str = Field(..., description="Level risiko keseluruhan")
     safe_to_prescribe: bool = Field(..., description="Aman untuk diresepkan")
     confidence_score: Optional[float] = Field(None, description="Skor kepercayaan")

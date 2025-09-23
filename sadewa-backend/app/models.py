@@ -1,8 +1,3 @@
-"""
-SQLAlchemy Models for SADEWA - Extended
-Enhanced version with proper relationships for JSON-to-DB migration
-"""
-# Standard library imports
 import enum
 
 # Third-party imports
@@ -14,12 +9,9 @@ from sqlalchemy.sql import func
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
-
-
 class GenderEnum(str, enum.Enum):
     male = "male"
     female = "female"
-
 
 class SeverityEnum(str, enum.Enum):
     """Enumeration for interaction severity levels."""
@@ -28,11 +20,55 @@ class SeverityEnum(str, enum.Enum):
     MINOR = "MINOR"
 
 
+class PatientMedication(Base):
+    """Associates a medication with a patient."""
+    __tablename__ = "patient_medications"
+
+    id = Column(Integer, primary_key=True, index=True)
+    no_rm = Column(String(50), ForeignKey("patients.no_rm"), nullable=False)  # ✅ GANTI
+    medication_name = Column(String(255), nullable=False)
+    dosage = Column(String(100))
+    frequency = Column(String(100))
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Relationship
+    patient = relationship("Patient", back_populates="medications")
+
+class PatientDiagnosis(Base):
+    """Associates an ICD-10 diagnosis with a patient."""
+    __tablename__ = "patient_diagnoses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    no_rm = Column(String(50), ForeignKey("patients.no_rm"), nullable=False)  # ✅ GANTI
+    icd_code = Column(String(10), ForeignKey("icds.code"))
+    diagnosis_text = Column(String(500))
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Relationships
+    patient = relationship("Patient", back_populates="diagnoses")
+    icd = relationship("ICD10", back_populates="patient_diagnoses")
+
+class PatientAllergy(Base):
+    """Records an allergy for a patient."""
+    __tablename__ = "patient_allergies"
+
+    id = Column(Integer, primary_key=True, index=True)
+    no_rm = Column(String(50), ForeignKey("patients.no_rm"), nullable=False)  # ✅ GANTI
+    allergen = Column(String(255), nullable=False)
+    reaction_type = Column(String(100))
+    severity = Column(String(50))
+    created_at = Column(DateTime, server_default=func.now())
+
+    # Relationship
+    patient = relationship("Patient", back_populates="allergies")
+
 class Patient(Base):
     """Represents a patient in the system."""
     __tablename__ = "patients"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(Integer, index=True)  # Bukan primary key lagi
+    no_rm = Column(String(50), primary_key=True, index=True)  # ✅ PRIMARY KEY
     name = Column(String(255), nullable=False, index=True)
     age = Column(Integer, nullable=False)
     gender = Column(Enum(GenderEnum), nullable=False)
@@ -41,19 +77,18 @@ class Patient(Base):
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
-    # Relationships
+    # Relationships - sekarang menggunakan no_rm
     medical_records = relationship("MedicalRecord", back_populates="patient")
     medications = relationship("PatientMedication", back_populates="patient")
     diagnoses = relationship("PatientDiagnosis", back_populates="patient")
     allergies = relationship("PatientAllergy", back_populates="patient")
-
 
 class MedicalRecord(Base):
     """Represents a single medical record entry for a patient."""
     __tablename__ = "medical_records"
 
     id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
+    no_rm = Column(String(50), ForeignKey("patients.no_rm"), nullable=False)  # ✅ GANTI
     diagnosis_code = Column(String(10), index=True)
     diagnosis_text = Column(String(500))
     medications = Column(JSON)
@@ -64,52 +99,6 @@ class MedicalRecord(Base):
 
     # Relationship
     patient = relationship("Patient", back_populates="medical_records")
-
-
-class PatientMedication(Base):
-    """Associates a medication with a patient."""
-    __tablename__ = "patient_medications"
-
-    id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
-    medication_name = Column(String(255), nullable=False)
-    dosage = Column(String(100))
-    frequency = Column(String(100))
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, server_default=func.now())
-
-    # Relationship
-    patient = relationship("Patient", back_populates="medications")
-
-
-class PatientDiagnosis(Base):
-    """Associates an ICD-10 diagnosis with a patient."""
-    __tablename__ = "patient_diagnoses"
-
-    id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
-    icd_code = Column(String(10), ForeignKey("icds.code"))
-    diagnosis_text = Column(String(500))
-    created_at = Column(DateTime, server_default=func.now())
-
-    # Relationships
-    patient = relationship("Patient", back_populates="diagnoses")
-    icd = relationship("ICD10", back_populates="patient_diagnoses")
-
-
-class PatientAllergy(Base):
-    """Records an allergy for a patient."""
-    __tablename__ = "patient_allergies"
-
-    id = Column(Integer, primary_key=True, index=True)
-    patient_id = Column(Integer, ForeignKey("patients.id"), nullable=False)
-    allergen = Column(String(255), nullable=False)
-    reaction_type = Column(String(100))
-    severity = Column(String(50))  # mild, moderate, severe
-    created_at = Column(DateTime, server_default=func.now())
-
-    # Relationship
-    patient = relationship("Patient", back_populates="allergies")
 
 
 class DrugInteraction(Base):

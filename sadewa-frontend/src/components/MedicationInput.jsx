@@ -326,7 +326,7 @@ const MedicationInput = ({
       </div>
 
       {/* Quick Add Common Medications */}
-      {!showAddForm && medications.length === 0 && (
+      {/* {!showAddForm && medications.length === 0 && (
         <div className="mb-6">
           <h4 className="text-sm font-medium text-gray-700 mb-3">
             Quick Add Common Medications:
@@ -348,7 +348,7 @@ const MedicationInput = ({
             ))}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Add Form */}
       {showAddForm && (

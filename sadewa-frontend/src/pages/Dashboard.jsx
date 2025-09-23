@@ -1,4 +1,4 @@
-// sadewa-frontend/src/pages/Dashboard.jsx - PERBAIKAN ERROR 404
+// sadewa-frontend/src/pages/Dashboard.jsx
 import React, { useState, useEffect } from "react";
 
 // Existing components
@@ -27,6 +27,7 @@ const Dashboard = () => {
   const [medications, setMedications] = useState([]);
   const [interactionResults, setInteractionResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
   // ✅ TAMBAHKAN state error
   const [error, setError] = useState(null);
@@ -57,6 +58,23 @@ const Dashboard = () => {
     setSelectedPatient(patient);
   };
 
+  const handleAddPatient = () => {
+    setShowRegistrationForm(true);
+    setActiveTab("register"); // atau bisa modal
+  };
+
+  // Handler ketika registrasi berhasil
+  const handleRegistrationSuccess = (newPatient) => {
+    setShowRegistrationForm(false);
+    setActiveTab("patients"); // kembali ke list
+    // Refresh patient list jika perlu
+  };
+
+  const handleRegistrationCancel = () => {
+    setShowRegistrationForm(false);
+    setActiveTab("patients");
+  };
+
   const handleDiagnosisSelect = (diagnosis) => {
     setSelectedDiagnosis(diagnosis);
   };
@@ -70,6 +88,10 @@ const Dashboard = () => {
 
   // ✅ PERBAIKI handleAnalyze - gunakan apiService
   const handleAnalyze = async () => {
+    console.log("DEBUG selectedPatient:", selectedPatient);
+    console.log("DEBUG no_rm:", selectedPatient?.no_rm);
+    console.log("DEBUG patient_code:", selectedPatient?.patient_code);
+    console.log("DEBUG id:", selectedPatient?.id);
     if (medications.length === 0) {
       setError("Please add at least one medication");
       return;
@@ -80,7 +102,8 @@ const Dashboard = () => {
 
     try {
       const payload = {
-        patient_id: selectedPatient?.id || "unknown",
+        patient_id:
+          selectedPatient?.patient_code || selectedPatient?.no_rm || "unknown",
         new_medications: medications.map((med) => `${med.name} ${med.dosage}`),
         diagnoses: selectedDiagnosis ? [selectedDiagnosis.code] : [],
         notes: `Analysis for ${selectedPatient?.name || "Unknown Patient"} - ${
@@ -152,7 +175,14 @@ const Dashboard = () => {
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
                   Daftar Pasien
                 </h2>
-                <PatientList compact />
+                <PatientList
+                  onSelectPatient={handlePatientSelect}
+                  onAddPatient={handleAddPatient} // ✅ TAMBAHKAN INI
+                  onEditPatient={(patient) => {
+                    // TODO: implement edit
+                    console.log("Edit patient:", patient);
+                  }}
+                />
               </div>
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">
@@ -164,6 +194,22 @@ const Dashboard = () => {
                 />
               </div>
             </div>
+          </div>
+        );
+
+      case "register":
+        return (
+          <div>
+            <button
+              onClick={() => setActiveTab("patients")}
+              className="mb-4 text-blue-500 hover:text-blue-700"
+            >
+              ← Kembali ke Daftar Pasien
+            </button>
+            <PatientRegistrationForm
+              onSuccess={handleRegistrationSuccess}
+              onCancel={handleRegistrationCancel}
+            />
           </div>
         );
 
