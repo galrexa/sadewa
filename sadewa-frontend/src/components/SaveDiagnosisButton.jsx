@@ -10,46 +10,36 @@ import {
   X,
   Users,
 } from "lucide-react";
+import { apiService } from "../services/api";
 
 const SaveDiagnosisButton = ({
   diagnosisData,
   medications = [],
   interactionResults = null,
+  selectedPatient,
   onSuccess,
   disabled = false,
 }) => {
+  console.log("DEBUG SaveDiagnosisButton:", {
+    selectedPatient,
+    medications,
+    medicationsLength: medications.length,
+    disabled,
+    shouldBeDisabled: disabled || medications.length === 0 || !selectedPatient,
+  });
   const [showModal, setShowModal] = useState(false);
-  const [selectedPatient, setSelectedPatient] = useState("");
-  const [patients, setPatients] = useState([]);
   const [notes, setNotes] = useState("");
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  // Fetch patients ketika modal dibuka
-  const handleOpenModal = async () => {
+  const handleOpenModal = () => {
     setShowModal(true);
-    setLoading(true);
     setError("");
-
-    try {
-      const response = await fetch("/api/patients/?limit=100");
-      if (!response.ok) {
-        throw new Error("Gagal mengambil data pasien");
-      }
-
-      const data = await response.json();
-      setPatients(data.patients);
-    } catch (err) {
-      setError("Gagal memuat daftar pasien. " + err.message);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleSave = async () => {
     if (!selectedPatient) {
-      setError("Pilih pasien terlebih dahulu");
+      setError("Tidak ada pasien yang dipilih");
       return;
     }
 
@@ -58,16 +48,20 @@ const SaveDiagnosisButton = ({
 
     try {
       const payload = {
-        patient_id: parseInt(selectedPatient),
+        patient_id: selectedPatient?.patient_code || selectedPatient?.no_rm,
         diagnosis_code: diagnosisData?.code || null,
-        diagnosis_text: diagnosisData?.text || null,
+        diagnosis_text: diagnosisData?.name_id || diagnosisData?.text || null,
         medications: medications,
         interaction_results: interactionResults,
         notes: notes.trim() || null,
       };
 
+      console.log("Saving diagnosis with payload:", payload);
+
       const response = await fetch(
-        `/api/patients/${selectedPatient}/save-diagnosis`,
+        `${apiService.api.defaults.baseURL}/api/patients/${
+          selectedPatient?.patient_code || selectedPatient?.no_rm
+        }/save-diagnosis`,
         {
           method: "POST",
           headers: {
@@ -86,7 +80,6 @@ const SaveDiagnosisButton = ({
 
       // Success
       setShowModal(false);
-      setSelectedPatient("");
       setNotes("");
 
       if (onSuccess) {
@@ -102,7 +95,6 @@ const SaveDiagnosisButton = ({
   const handleCloseModal = () => {
     if (saving) return;
     setShowModal(false);
-    setSelectedPatient("");
     setNotes("");
     setError("");
   };
@@ -110,9 +102,12 @@ const SaveDiagnosisButton = ({
   // Summary untuk preview
   const getSummary = () => {
     const summary = {
-      diagnosis: diagnosisData?.text || "Tidak ada diagnosis",
+      diagnosis:
+        diagnosisData?.name_id || diagnosisData?.text || "Tidak ada diagnosis",
       medicationCount: medications.length,
-      hasInteractions: interactionResults?.interactions_found > 0,
+      hasInteractions:
+        interactionResults?.warnings?.length > 0 ||
+        interactionResults?.interactions_found > 0,
     };
     return summary;
   };
@@ -124,10 +119,12 @@ const SaveDiagnosisButton = ({
       {/* Save Button */}
       <button
         onClick={handleOpenModal}
-        disabled={disabled || medications.length === 0}
+        disabled={disabled || !selectedPatient}
         className="flex items-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg font-medium transition-colors"
         title={
-          medications.length === 0
+          !selectedPatient
+            ? "Pilih pasien terlebih dahulu"
+            : medications.length === 0
             ? "Tambahkan obat terlebih dahulu"
             : "Simpan diagnosis ke rekam medis pasien"
         }
@@ -158,6 +155,27 @@ const SaveDiagnosisButton = ({
             </div>
 
             <div className="p-6 space-y-6">
+              {/* Current Patient Info */}
+              <div className="bg-blue-50 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  <User className="h-4 w-4" />
+                  Simpan untuk Pasien:
+                </h3>
+                <div className="text-blue-800">
+                  <p className="font-medium">{selectedPatient?.name}</p>
+                  <p className="text-sm">
+                    {selectedPatient?.age} tahun,{" "}
+                    {selectedPatient?.gender === "male"
+                      ? "Laki-laki"
+                      : "Perempuan"}
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    ID:{" "}
+                    {selectedPatient?.patient_code || selectedPatient?.no_rm}
+                  </p>
+                </div>
+              </div>
+
               {/* Preview Diagnosis */}
               <div className="bg-gray-50 rounded-lg p-4">
                 <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
@@ -183,7 +201,9 @@ const SaveDiagnosisButton = ({
                           key={index}
                           className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs mr-2 mb-1"
                         >
-                          {med}
+                          {typeof med === "string"
+                            ? med
+                            : `${med.name || "Unknown"} ${med.dosage || ""}`}
                         </span>
                       ))}
                     </div>
@@ -193,51 +213,15 @@ const SaveDiagnosisButton = ({
                     <div className="flex items-center gap-2 text-orange-600">
                       <AlertTriangle className="h-4 w-4" />
                       <span className="font-medium">
-                        Ditemukan {interactionResults.interactions_found}{" "}
-                        interaksi obat
+                        Ditemukan{" "}
+                        {interactionResults?.warnings?.length ||
+                          interactionResults?.interactions_found ||
+                          0}{" "}
+                        peringatan interaksi obat
                       </span>
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Patient Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pilih Pasien *
-                </label>
-
-                {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <div className="animate-spin rounded-full h-6 w-6 border-2 border-blue-500 border-t-transparent"></div>
-                    <span className="ml-2 text-gray-600">
-                      Memuat daftar pasien...
-                    </span>
-                  </div>
-                ) : patients.length === 0 ? (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <Users className="mx-auto h-12 w-12 text-gray-400 mb-2" />
-                    <p className="text-gray-600">Belum ada pasien terdaftar</p>
-                    <p className="text-sm text-gray-500">
-                      Daftarkan pasien terlebih dahulu
-                    </p>
-                  </div>
-                ) : (
-                  <select
-                    value={selectedPatient}
-                    onChange={(e) => setSelectedPatient(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={saving}
-                  >
-                    <option value="">-- Pilih Pasien --</option>
-                    {patients.map((patient) => (
-                      <option key={patient.id} value={patient.id}>
-                        {patient.name} ({patient.age} tahun,{" "}
-                        {patient.gender === "male" ? "Laki-laki" : "Perempuan"})
-                      </option>
-                    ))}
-                  </select>
-                )}
               </div>
 
               {/* Clinical Notes */}
@@ -271,7 +255,7 @@ const SaveDiagnosisButton = ({
               <div className="flex gap-3 pt-4 border-t">
                 <button
                   onClick={handleSave}
-                  disabled={saving || !selectedPatient || patients.length === 0}
+                  disabled={saving || !selectedPatient}
                   className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 disabled:bg-gray-400 text-white px-4 py-3 rounded-lg font-medium transition-colors"
                 >
                   {saving ? (

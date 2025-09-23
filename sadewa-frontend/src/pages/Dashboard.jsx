@@ -13,7 +13,6 @@ import PatientRegistrationForm from "../components/PatientRegistrationForm";
 import PatientList from "../components/PatientList";
 import SaveDiagnosisButton from "../components/SaveDiagnosisButton";
 
-// ✅ TAMBAHKAN import apiService
 import { apiService } from "../services/api";
 
 const Dashboard = () => {
@@ -29,24 +28,21 @@ const Dashboard = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
 
-  // ✅ TAMBAHKAN state error
   const [error, setError] = useState(null);
 
   // New states
   const [patients, setPatients] = useState([]);
 
-  // ✅ PERBAIKI Load patient count
   useEffect(() => {
     const fetchPatientCount = async () => {
       try {
-        // GUNAKAN apiService instead of fetch
         const result = await apiService.getAllPatients();
         if (result.success) {
           setPatientCount(result.data.length);
         }
       } catch (error) {
         console.error("Failed to fetch patient count:", error);
-        setPatientCount(0); // fallback value
+        setPatientCount(0);
       }
     };
 
@@ -60,14 +56,12 @@ const Dashboard = () => {
 
   const handleAddPatient = () => {
     setShowRegistrationForm(true);
-    setActiveTab("register"); // atau bisa modal
+    setActiveTab("register");
   };
 
-  // Handler ketika registrasi berhasil
   const handleRegistrationSuccess = (newPatient) => {
     setShowRegistrationForm(false);
-    setActiveTab("patients"); // kembali ke list
-    // Refresh patient list jika perlu
+    setActiveTab("patients");
   };
 
   const handleRegistrationCancel = () => {
@@ -81,17 +75,16 @@ const Dashboard = () => {
 
   const handleMedicationChange = (newMedications) => {
     setMedications(newMedications);
-    // Clear previous results when medications change
     setInteractionResults(null);
-    setError(null); // clear previous errors
+    setError(null);
   };
 
-  // ✅ PERBAIKI handleAnalyze - gunakan apiService
   const handleAnalyze = async () => {
     console.log("DEBUG selectedPatient:", selectedPatient);
     console.log("DEBUG no_rm:", selectedPatient?.no_rm);
     console.log("DEBUG patient_code:", selectedPatient?.patient_code);
     console.log("DEBUG id:", selectedPatient?.id);
+
     if (medications.length === 0) {
       setError("Please add at least one medication");
       return;
@@ -111,19 +104,18 @@ const Dashboard = () => {
         }`,
       };
 
-      console.log("🔍 Analyzing interactions with payload:", payload);
+      console.log("Analyzing interactions with payload:", payload);
 
-      // GUNAKAN apiService instead of fetch
       const result = await apiService.analyzeInteractions(payload);
 
       if (result.success) {
         setInteractionResults(result.data);
-        console.log("✅ Analysis successful:", result.data);
+        console.log("Analysis successful:", result.data);
       } else {
         throw new Error(result.error || "Analysis failed");
       }
     } catch (error) {
-      console.error("❌ Analysis failed:", error);
+      console.error("Analysis failed:", error);
       setError(error.message || "Failed to analyze interactions");
       setInteractionResults(null);
     } finally {
@@ -131,10 +123,14 @@ const Dashboard = () => {
     }
   };
 
-  // New handlers
   const handleSaveDiagnosisSuccess = (savedRecord) => {
     alert("Diagnosis berhasil disimpan ke rekam medis!");
     console.log("Saved record:", savedRecord);
+    setSelectedPatient(null);
+    setSelectedDiagnosis(null);
+    setMedications([]);
+    setInteractionResults(null);
+    setError(null);
   };
 
   const handleTabChange = (newTab) => {
@@ -177,9 +173,8 @@ const Dashboard = () => {
                 </h2>
                 <PatientList
                   onSelectPatient={handlePatientSelect}
-                  onAddPatient={handleAddPatient} // ✅ TAMBAHKAN INI
+                  onAddPatient={handleAddPatient}
                   onEditPatient={(patient) => {
-                    // TODO: implement edit
                     console.log("Edit patient:", patient);
                   }}
                 />
@@ -214,6 +209,10 @@ const Dashboard = () => {
         );
 
       case "drug-analysis":
+        console.log(
+          "DEBUG Dashboard drug-analysis - selectedPatient:",
+          selectedPatient
+        );
         return (
           <div className="max-w-6xl mx-auto">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">
@@ -261,7 +260,6 @@ const Dashboard = () => {
                     onMedicationsChange={handleMedicationChange}
                   />
 
-                  {/* ✅ TAMPILKAN error jika ada */}
                   {error && (
                     <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                       <p className="text-sm text-red-800">❌ {error}</p>
@@ -284,12 +282,12 @@ const Dashboard = () => {
                         "Analisis Interaksi"
                       )}
                     </button>
-
                     {interactionResults && !error && (
                       <SaveDiagnosisButton
                         diagnosisData={selectedDiagnosis}
                         medications={medications}
                         interactionResults={interactionResults}
+                        selectedPatient={selectedPatient}
                         onSuccess={handleSaveDiagnosisSuccess}
                         disabled={!selectedPatient}
                       />
@@ -358,6 +356,10 @@ const Dashboard = () => {
         );
 
       default: // dashboard
+        console.log(
+          "DEBUG Dashboard default - selectedPatient:",
+          selectedPatient
+        );
         return (
           <div className="max-w-6xl mx-auto">
             <h1 className="text-2xl font-bold text-gray-900 mb-6">
@@ -405,7 +407,6 @@ const Dashboard = () => {
                     onMedicationsChange={handleMedicationChange}
                   />
 
-                  {/* ✅ TAMPILKAN error jika ada */}
                   {error && (
                     <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                       <p className="text-sm text-red-800">❌ {error}</p>
@@ -434,6 +435,7 @@ const Dashboard = () => {
                         diagnosisData={selectedDiagnosis}
                         medications={medications}
                         interactionResults={interactionResults}
+                        selectedPatient={selectedPatient} // ✅ FIXED: Added missing prop
                         onSuccess={handleSaveDiagnosisSuccess}
                         disabled={!selectedPatient}
                       />

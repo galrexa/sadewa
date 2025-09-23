@@ -5,15 +5,17 @@ Priority: Registrasi Pasien + Fast Search + Validation
 """
 
 import time
+import json
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks
-from sqlalchemy import text, and_, or_
+from fastapi import APIRouter, Depends, HTTPException, Query, BackgroundTasks, Request
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 from pydantic import BaseModel, Field, field_validator
 
 from app.database import get_db
+from app.models import Patient, MedicalRecord, PatientMedication, PatientDiagnosis, PatientAllergy
 import logging
 
 # Setup logging
@@ -385,6 +387,59 @@ async def update_patient(
         db.rollback()
         logger.error(f"Database error updating patient {patient_id}: {e}")
         raise HTTPException(status_code=500, detail="Gagal mengupdate data pasien")
+
+@router.post("/patients/{patient_id}/save-diagnosis")
+async def save_patient_diagnosis(
+    patient_id: str,
+    diagnosis_data: dict,
+    db: Session = Depends(get_db)
+):
+    try:
+        print(f"DEBUG - Received request for patient {patient_id}")
+        
+        # Validate patient exists
+        patient = db.query(Patient).filter(Patient.no_rm == patient_id).first()
+        if not patient:
+            raise HTTPException(status_code=404, detail=f"Patient {patient_id} not found")
+        
+        # Extract medications properly
+        medications_data = diagnosis_data.get('medications', [])
+        
+        # Process medications: extract only essential fields
+        processed_medications = []
+        for med in medications_data:
+            if isinstance(med, dict):
+                processed_medications.append({
+                    "name": med.get('name', ''),
+                    "dosage": med.get('dosage', ''),
+                    "frequency": med.get('frequency', ''),
+                    "notes": med.get('notes', '')
+                })
+            else:
+                # If medication is string, keep as is
+                processed_medications.append(str(med))
+        
+        # Create medical record with proper JSON structure
+        new_record = MedicalRecord(
+            no_rm=patient_id,
+            diagnosis_code=diagnosis_data.get('diagnosis_code'),
+            diagnosis_text=diagnosis_data.get('diagnosis_text'),
+            medications=processed_medications,  # Let SQLAlchemy handle JSON conversion
+            interactions=diagnosis_data.get('interaction_results'),  # Store full interaction results
+            notes=diagnosis_data.get('notes'),
+        )
+        
+        db.add(new_record)
+        db.commit()
+        
+        print(f"DEBUG - Successfully saved medical record")
+        
+        return {"success": True, "message": "Diagnosis saved successfully", "record_id": new_record.id}
+        
+    except Exception as e:
+        print(f"ERROR - {str(e)}")
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 @router.get("/patients/stats/summary")
 async def get_patient_statistics(db: Session = Depends(get_db)):
