@@ -15,6 +15,7 @@ import {
   ChevronRight,
   Loader2,
 } from "lucide-react";
+import PatientDetailModal from "./PatientDetailModal";
 
 const PatientList = ({ onSelectPatient, onAddPatient, onEditPatient }) => {
   const [patients, setPatients] = useState([]);
@@ -25,6 +26,12 @@ const PatientList = ({ onSelectPatient, onAddPatient, onEditPatient }) => {
     page: 1,
     limit: 10,
     total: 0,
+  });
+
+  // State untuk modal detail
+  const [detailModal, setDetailModal] = useState({
+    isOpen: false,
+    patientId: null,
   });
 
   // Fetch patients dari API
@@ -79,6 +86,30 @@ const PatientList = ({ onSelectPatient, onAddPatient, onEditPatient }) => {
     }, 500);
 
     return () => clearTimeout(timeoutId);
+  };
+
+  // Handle view patient detail
+  const handleViewDetail = (patient) => {
+    console.log("DEBUG handleViewDetail - patient object:", patient);
+    console.log("DEBUG handleViewDetail - patient.no_rm:", patient.no_rm);
+    console.log("DEBUG handleViewDetail - patient.id:", patient.id);
+
+    // ✅ FIXED: Gunakan no_rm sebagai identifier, bukan id
+    const patientId = patient.no_rm || patient.patient_code || patient.id;
+    console.log("DEBUG handleViewDetail - using patientId:", patientId);
+
+    setDetailModal({
+      isOpen: true,
+      patientId: patientId,
+    });
+  };
+
+  // Handle close detail modal
+  const handleCloseDetailModal = () => {
+    setDetailModal({
+      isOpen: false,
+      patientId: null,
+    });
   };
 
   // Handle pagination
@@ -251,7 +282,17 @@ const PatientList = ({ onSelectPatient, onAddPatient, onEditPatient }) => {
                     {/* Action Buttons */}
                     <div className="flex items-center gap-2 ml-4">
                       <button
-                        onClick={() => onSelectPatient(patient)}
+                        onClick={() =>
+                          onSelectPatient && onSelectPatient(patient)
+                        }
+                        className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Pilih Pasien"
+                      >
+                        <UserCheck className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        onClick={() => handleViewDetail(patient)}
                         className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Lihat Detail"
                       >
@@ -322,6 +363,19 @@ const PatientList = ({ onSelectPatient, onAddPatient, onEditPatient }) => {
           )}
         </>
       )}
+
+      {/* Patient Detail Modal */}
+      <PatientDetailModal
+        isOpen={detailModal.isOpen}
+        onClose={handleCloseDetailModal}
+        patientId={detailModal.patientId}
+        onEdit={onEditPatient}
+        onDelete={(patient) => {
+          console.log("Patient deleted:", patient);
+          fetchPatients(pagination.page, searchTerm); // Refresh list
+        }}
+        onRefresh={() => fetchPatients(pagination.page, searchTerm)}
+      />
     </div>
   );
 };

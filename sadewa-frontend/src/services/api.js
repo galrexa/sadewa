@@ -191,6 +191,19 @@ export const apiService = {
     }
   },
 
+  async deletePatient(patientId) {
+    try {
+      console.log(`Deleting patient ${patientId} from API...`);
+      const response = await api.delete(`/api/patients/${patientId}`);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error(`Failed to delete patient ${patientId} from API:`, error);
+      const errorMessage =
+        error.response?.data?.detail || error.message || "Unknown error";
+      throw new Error(`Failed to delete patient: ${errorMessage}`);
+    }
+  },
+
   // Tambahkan di object apiService:
   async getCurrentMedications(patientId) {
     try {

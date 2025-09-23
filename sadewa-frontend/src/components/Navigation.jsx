@@ -24,12 +24,12 @@ const Navigation = ({ activeTab, onTabChange, patientCount = 0 }) => {
       icon: Home,
       description: "Halaman utama sistem",
     },
-    {
-      id: "drug-analysis",
-      name: "Analisis Obat",
-      icon: Pill,
-      description: "Analisis interaksi obat",
-    },
+    // {
+    //   id: "drug-analysis",
+    //   name: "Analisis Obat",
+    //   icon: Pill,
+    //   description: "Analisis interaksi obat",
+    // },
     {
       id: "patients",
       name: "Manajemen Pasien",
