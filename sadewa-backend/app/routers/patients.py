@@ -87,7 +87,7 @@ class PaginatedResponse(BaseModel):
 
 # ===== GET ENDPOINTS =====
 
-@router.get("/patients/search")
+@router.get("/search")
 async def search_patients(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(10, ge=1, le=100, description="Results per page"),
@@ -188,7 +188,7 @@ async def search_patients(
         logger.error(f"❌ Failed to search patients: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to search patients: {str(e)}")
 
-@router.get("/patients")
+@router.get("/")
 async def get_all_patients(
     limit: int = Query(100, ge=1, le=1000, description="Maximum results"),
     db: Session = Depends(get_db)
@@ -256,7 +256,7 @@ async def get_all_patients(
         logger.error(f"❌ Failed to get all patients: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get patients: {str(e)}")
 
-@router.get("/patients/{no_rm}")
+@router.get("/{no_rm}")
 async def get_patient_by_no_rm(
     no_rm: str,
     db: Session = Depends(get_db)

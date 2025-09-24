@@ -220,12 +220,12 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError):
         }
     )
 
-app.include_router(patients_router, prefix="/api", tags=["Patients"])
-app.include_router(medical_records_router, prefix="/api", tags=["Medical Records"])
-app.include_router(ai_diagnosis_router, prefix="/api", tags=["AI Diagnosis"])
-app.include_router(icd10.router, prefix="/api/icd10", tags=["ICD10"])
-app.include_router(interactions_router, prefix="/api", tags=["Interactions"])
-app.include_router(drugs.router, prefix="/api/drugs", tags=["Drugs"])
+app.include_router(patients_router, prefix="/patients", tags=["Patients"])
+app.include_router(medical_records_router, prefix="/medical-records", tags=["Medical Records"])
+app.include_router(ai_diagnosis_router, prefix="/ai", tags=["AI Diagnosis"])
+app.include_router(icd10.router, prefix="/icd10", tags=["ICD10"])
+app.include_router(interactions_router, prefix="/interactions", tags=["Interactions"])
+app.include_router(drugs.router, prefix="/drugs", tags=["Drugs"])
 
 # ===== ROOT & HEALTH ENDPOINTS =====
 
