@@ -24,13 +24,18 @@ router = APIRouter()
 # ===== SCHEMAS =====
 
 class PatientCreate(BaseModel):
-    """Schema untuk create patient"""
+    """Schema untuk create patient - FIXED untuk match database schema"""
     no_rm: str = Field(..., description="Nomor Rekam Medis")
     name: str = Field(..., description="Nama lengkap pasien")
     age: int = Field(..., ge=0, le=150, description="Umur pasien")
+    birth_date: Optional[str] = Field(None, description="Tanggal lahir (YYYY-MM-DD)")
     gender: str = Field(..., pattern="^(male|female)$", description="Jenis kelamin")
+    address: str = Field(..., description="Alamat lengkap pasien")  # ✅ ADDED - NOT NULL di DB
     phone: Optional[str] = Field(None, description="Nomor telepon")
     weight_kg: Optional[int] = Field(None, ge=0, description="Berat badan (kg)")
+    height_cm: float = Field(..., ge=0, description="Tinggi badan (cm)")  # ✅ ADDED - NOT NULL di DB
+    blood_types: str = Field(..., pattern="^(A|B|AB|O)$", description="Golongan darah")  # ✅ ADDED - NOT NULL di DB
+    allergies: str = Field(..., description="Riwayat alergi")  # ✅ ADDED - NOT NULL di DB
     medical_history: Optional[Dict[str, Any]] = Field(None, description="Riwayat medis untuk AI analysis")
     risk_factors: Optional[Dict[str, Any]] = Field(None, description="Faktor risiko untuk AI assessment")
     ai_risk_score: Optional[float] = Field(None, ge=0.0, le=10.0, description="AI-generated risk score")
@@ -369,11 +374,13 @@ async def create_patient(
         # Insert new patient
         insert_query = text("""
             INSERT INTO patients (
-                no_rm, name, age, gender, phone, weight_kg,
+                no_rm, name, age, gender, address, phone, weight_kg,
+                height_cm, blood_types, allergies,
                 medical_history, risk_factors, ai_risk_score,
                 created_at, updated_at
             ) VALUES (
-                :no_rm, :name, :age, :gender, :phone, :weight_kg,
+                :no_rm, :name, :age, :gender, :address, :phone, :weight_kg,
+                :height_cm, :blood_types, :allergies,
                 :medical_history, :risk_factors, :ai_risk_score,
                 NOW(), NOW()
             )
@@ -388,8 +395,12 @@ async def create_patient(
             "name": patient.name,
             "age": patient.age,
             "gender": patient.gender,
+            "address": patient.address,  # ✅ ADDED
             "phone": patient.phone,
             "weight_kg": patient.weight_kg,
+            "height_cm": patient.height_cm,  # ✅ ADDED
+            "blood_types": patient.blood_types,  # ✅ ADDED
+            "allergies": patient.allergies,  # ✅ ADDED
             "medical_history": medical_history_json,
             "risk_factors": risk_factors_json,
             "ai_risk_score": patient.ai_risk_score
