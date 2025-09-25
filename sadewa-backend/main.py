@@ -220,7 +220,7 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError):
         }
     )
 
-app.include_router(patients_router, prefix="/api", tags=["Patients"])
+app.include_router(patients_router, prefix="/api/patients", tags=["Patients"])
 app.include_router(medical_records_router, prefix="/api", tags=["Medical Records"])
 app.include_router(ai_diagnosis_router, prefix="/api", tags=["AI Diagnosis"])
 app.include_router(icd10.router, prefix="/api/icd10", tags=["ICD10"])

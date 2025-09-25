@@ -237,6 +237,21 @@ export const apiService = {
     }
   },
 
+  // Tambahkan setelah function deletePatient
+  async updatePatient(patientId, updateData) {
+    try {
+      console.log(`Updating patient ${patientId}:`, updateData);
+      const response = await api.put(`/api/patients/${patientId}`, updateData);
+      console.log("Update patient response:", response.data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error(`Failed to update patient ${patientId}:`, error);
+      const errorMessage =
+        error.response?.data?.detail || error.message || "Unknown error";
+      throw new Error(`Failed to update patient: ${errorMessage}`);
+    }
+  },
+
   // Tambahkan di object apiService:
   async getCurrentMedications(patientId) {
     try {

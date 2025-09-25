@@ -14,8 +14,10 @@ import PatientList from "../components/PatientList";
 import SaveDiagnosisButton from "../components/SaveDiagnosisButton";
 
 import { apiService } from "../services/api";
+import { useToast } from "../components/ToastNotification";
 
 const Dashboard = () => {
+  const toast = useToast();
   // Navigation state
   const [activeTab, setActiveTab] = useState("dashboard");
   const [patientCount, setPatientCount] = useState(0);
@@ -160,7 +162,10 @@ const Dashboard = () => {
   };
 
   const handleSaveDiagnosisSuccess = (savedRecord) => {
-    alert("Diagnosis berhasil disimpan ke rekam medis!");
+    toast.success("Diagnosis berhasil disimpan ke rekam medis!", {
+      title: "Berhasil!",
+      duration: 4000,
+    });
     console.log("Saved record:", savedRecord);
     setSelectedPatient(null);
     setSelectedDiagnosis(null);

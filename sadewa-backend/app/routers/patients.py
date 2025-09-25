@@ -92,7 +92,7 @@ class PaginatedResponse(BaseModel):
 
 # ===== GET ENDPOINTS =====
 
-@router.get("/patients/search")
+@router.get("/search")
 async def search_patients(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(10, ge=1, le=100, description="Results per page"),
@@ -193,7 +193,7 @@ async def search_patients(
         logger.error(f"❌ Failed to search patients: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to search patients: {str(e)}")
 
-@router.get("/patients")
+@router.get("/")
 async def get_all_patients(
     limit: int = Query(100, ge=1, le=1000, description="Maximum results"),
     db: Session = Depends(get_db)
@@ -261,7 +261,7 @@ async def get_all_patients(
         logger.error(f"❌ Failed to get all patients: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get patients: {str(e)}")
 
-@router.get("/patients/{no_rm}")
+@router.get("/{no_rm}")
 async def get_patient_by_no_rm(
     no_rm: str,
     db: Session = Depends(get_db)
@@ -355,9 +355,94 @@ async def get_patient_by_no_rm(
         logger.error(f"❌ Failed to get patient {no_rm}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get patient: {str(e)}")
 
+@router.put("/{patient_identifier}")
+async def update_patient(
+    patient_identifier: str,
+    patient_update: PatientUpdate,
+    db: Session = Depends(get_db)
+):
+    """Update patient information - accepts both id and no_rm"""
+    try:
+        # Check if patient exists by id or no_rm
+        if patient_identifier.isdigit():
+            # Search by ID
+            check_query = text("SELECT no_rm, name, id FROM patients WHERE id = :id")
+            existing = db.execute(check_query, {"id": int(patient_identifier)}).fetchone()
+        else:
+            # Search by no_rm
+            check_query = text("SELECT no_rm, name, id FROM patients WHERE no_rm = :no_rm")
+            existing = db.execute(check_query, {"no_rm": patient_identifier}).fetchone()
+        
+        if not existing:
+            raise HTTPException(status_code=404, detail=f"Patient {patient_identifier} not found")
+        
+        # Use the actual no_rm from database for update
+        actual_no_rm = existing.no_rm
+        
+        # Build update query dynamically
+        update_fields = []
+        params = {"no_rm": actual_no_rm}
+        
+        if patient_update.name is not None:
+            update_fields.append("name = :name")
+            params["name"] = patient_update.name
+        
+        if patient_update.age is not None:
+            update_fields.append("age = :age")
+            params["age"] = patient_update.age
+            
+        if patient_update.gender is not None:
+            update_fields.append("gender = :gender")
+            params["gender"] = patient_update.gender
+            
+        if patient_update.phone is not None:
+            update_fields.append("phone = :phone")
+            params["phone"] = patient_update.phone
+            
+        if patient_update.weight_kg is not None:
+            update_fields.append("weight_kg = :weight_kg")
+            params["weight_kg"] = patient_update.weight_kg
+            
+        if patient_update.medical_history is not None:
+            update_fields.append("medical_history = :medical_history")
+            params["medical_history"] = json.dumps(patient_update.medical_history)
+            
+        if patient_update.risk_factors is not None:
+            update_fields.append("risk_factors = :risk_factors")
+            params["risk_factors"] = json.dumps(patient_update.risk_factors)
+            
+        if patient_update.ai_risk_score is not None:
+            update_fields.append("ai_risk_score = :ai_risk_score")
+            params["ai_risk_score"] = patient_update.ai_risk_score
+        
+        if not update_fields:
+            raise HTTPException(status_code=400, detail="No fields to update")
+        
+        # Add updated_at
+        update_fields.append("updated_at = NOW()")
+        
+        # Execute update
+        update_query = f"UPDATE patients SET {', '.join(update_fields)} WHERE no_rm = :no_rm"
+        db.execute(text(update_query), params)
+        db.commit()
+        
+        logger.info(f"✅ Updated patient {actual_no_rm}")
+        
+        return {
+            "success": True,
+            "message": f"Patient {actual_no_rm} updated successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        logger.error(f"❌ Failed to update patient {patient_identifier}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to update patient: {str(e)}")
+
 # ===== POST ENDPOINTS =====
 
-@router.post("/patients")
+@router.post("/")
 async def create_patient(
     patient: PatientCreate,
     db: Session = Depends(get_db)
@@ -423,7 +508,7 @@ async def create_patient(
         logger.error(f"❌ Failed to create patient: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create patient: {str(e)}")
 
-@router.post("/patients/{no_rm}/save-diagnosis")
+@router.post("/{no_rm}/save-diagnosis")
 async def save_diagnosis(
     no_rm: str,
     request: SaveDiagnosisRequest,
@@ -508,85 +593,85 @@ async def save_diagnosis(
 
 # ===== PUT ENDPOINTS =====
 
-@router.put("/patients/{no_rm}")
-async def update_patient(
-    no_rm: str,
-    patient_update: PatientUpdate,
-    db: Session = Depends(get_db)
-):
-    """Update patient information"""
-    try:
-        # Check if patient exists
-        check_query = text("SELECT no_rm, name FROM patients WHERE no_rm = :no_rm")
-        existing = db.execute(check_query, {"no_rm": no_rm}).fetchone()
+# @router.put("/patients/{no_rm}")
+# async def update_patient(
+#     no_rm: str,
+#     patient_update: PatientUpdate,
+#     db: Session = Depends(get_db)
+# ):
+#     """Update patient information"""
+#     try:
+#         # Check if patient exists
+#         check_query = text("SELECT no_rm, name FROM patients WHERE no_rm = :no_rm")
+#         existing = db.execute(check_query, {"no_rm": no_rm}).fetchone()
         
-        if not existing:
-            raise HTTPException(status_code=404, detail=f"Patient {no_rm} not found")
+#         if not existing:
+#             raise HTTPException(status_code=404, detail=f"Patient {no_rm} not found")
         
-        # Build update query dynamically
-        update_fields = []
-        params = {"no_rm": no_rm}
+#         # Build update query dynamically
+#         update_fields = []
+#         params = {"no_rm": no_rm}
         
-        if patient_update.name is not None:
-            update_fields.append("name = :name")
-            params["name"] = patient_update.name
+#         if patient_update.name is not None:
+#             update_fields.append("name = :name")
+#             params["name"] = patient_update.name
         
-        if patient_update.age is not None:
-            update_fields.append("age = :age")
-            params["age"] = patient_update.age
+#         if patient_update.age is not None:
+#             update_fields.append("age = :age")
+#             params["age"] = patient_update.age
             
-        if patient_update.gender is not None:
-            update_fields.append("gender = :gender")
-            params["gender"] = patient_update.gender
+#         if patient_update.gender is not None:
+#             update_fields.append("gender = :gender")
+#             params["gender"] = patient_update.gender
             
-        if patient_update.phone is not None:
-            update_fields.append("phone = :phone")
-            params["phone"] = patient_update.phone
+#         if patient_update.phone is not None:
+#             update_fields.append("phone = :phone")
+#             params["phone"] = patient_update.phone
             
-        if patient_update.weight_kg is not None:
-            update_fields.append("weight_kg = :weight_kg")
-            params["weight_kg"] = patient_update.weight_kg
+#         if patient_update.weight_kg is not None:
+#             update_fields.append("weight_kg = :weight_kg")
+#             params["weight_kg"] = patient_update.weight_kg
             
-        if patient_update.medical_history is not None:
-            update_fields.append("medical_history = :medical_history")
-            params["medical_history"] = json.dumps(patient_update.medical_history)
+#         if patient_update.medical_history is not None:
+#             update_fields.append("medical_history = :medical_history")
+#             params["medical_history"] = json.dumps(patient_update.medical_history)
             
-        if patient_update.risk_factors is not None:
-            update_fields.append("risk_factors = :risk_factors")
-            params["risk_factors"] = json.dumps(patient_update.risk_factors)
+#         if patient_update.risk_factors is not None:
+#             update_fields.append("risk_factors = :risk_factors")
+#             params["risk_factors"] = json.dumps(patient_update.risk_factors)
             
-        if patient_update.ai_risk_score is not None:
-            update_fields.append("ai_risk_score = :ai_risk_score")
-            params["ai_risk_score"] = patient_update.ai_risk_score
+#         if patient_update.ai_risk_score is not None:
+#             update_fields.append("ai_risk_score = :ai_risk_score")
+#             params["ai_risk_score"] = patient_update.ai_risk_score
         
-        if not update_fields:
-            raise HTTPException(status_code=400, detail="No fields to update")
+#         if not update_fields:
+#             raise HTTPException(status_code=400, detail="No fields to update")
         
-        # Add updated_at
-        update_fields.append("updated_at = NOW()")
+#         # Add updated_at
+#         update_fields.append("updated_at = NOW()")
         
-        # Execute update
-        update_query = f"UPDATE patients SET {', '.join(update_fields)} WHERE no_rm = :no_rm"
-        db.execute(text(update_query), params)
-        db.commit()
+#         # Execute update
+#         update_query = f"UPDATE patients SET {', '.join(update_fields)} WHERE no_rm = :no_rm"
+#         db.execute(text(update_query), params)
+#         db.commit()
         
-        logger.info(f"✅ Updated patient {no_rm}")
+#         logger.info(f"✅ Updated patient {no_rm}")
         
-        return {
-            "success": True,
-            "message": f"Patient {no_rm} updated successfully"
-        }
+#         return {
+#             "success": True,
+#             "message": f"Patient {no_rm} updated successfully"
+#         }
         
-    except HTTPException:
-        raise
-    except Exception as e:
-        db.rollback()
-        logger.error(f"❌ Failed to update patient {no_rm}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to update patient: {str(e)}")
+#     except HTTPException:
+#         raise
+#     except Exception as e:
+#         db.rollback()
+#         logger.error(f"❌ Failed to update patient {no_rm}: {e}")
+#         raise HTTPException(status_code=500, detail=f"Failed to update patient: {str(e)}")
 
 # ===== DELETE ENDPOINTS =====
 
-@router.delete("/patients/{no_rm}")
+@router.delete("/{no_rm}")
 async def delete_patient(
     no_rm: str,
     db: Session = Depends(get_db)
