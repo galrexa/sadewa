@@ -140,8 +140,8 @@ const Navigation = ({ activeTab, onTabChange, patientCount = 0 }) => {
         <div className="p-6">
           {/* Logo/Header */}
           <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Shield className="h-6 w-6 text-blue-600" />
+            <div className="p-2">
+              <img src="/sadewa.png" alt="SADEWA Logo" className="h-6 w-6" />
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900">SADEWA</h1>
@@ -177,8 +177,8 @@ const Navigation = ({ activeTab, onTabChange, patientCount = 0 }) => {
         {/* Mobile Header */}
         <div className="bg-white shadow-sm border-b px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Shield className="h-5 w-5 text-blue-600" />
+            <div className="p-2">
+              <img src="/sadewa.png" alt="SADEWA Logo" className="h-6 w-6" />
             </div>
             <div>
               <h1 className="font-bold text-gray-900">SADEWA</h1>
