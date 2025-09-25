@@ -42,7 +42,8 @@ app = FastAPI(
     - **Drug Interaction Analysis** - Real-time safety checking
     - **Performance Monitoring** - Built-in analytics and caching
     """,
-    version="2.1.0-optimized",
+    version="2.1.0",
+    openapi_version="3.0.2",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -226,7 +227,8 @@ app.include_router(ai_diagnosis_router, prefix="/ai", tags=["AI Diagnosis"])
 app.include_router(icd10.router, prefix="/icd10", tags=["ICD10"])
 app.include_router(interactions_router, prefix="/interactions", tags=["Interactions"])
 app.include_router(drugs.router, prefix="/drugs", tags=["Drugs"])
-
+        
+        
 # ===== ROOT & HEALTH ENDPOINTS =====
 
 @app.get("/", tags=["System"])

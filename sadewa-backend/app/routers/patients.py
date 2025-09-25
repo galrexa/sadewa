@@ -352,7 +352,7 @@ async def get_patient_by_no_rm(
 
 # ===== POST ENDPOINTS =====
 
-@router.post("/patients")
+@router.post("/")
 async def create_patient(
     patient: PatientCreate,
     db: Session = Depends(get_db)
@@ -412,7 +412,7 @@ async def create_patient(
         logger.error(f"❌ Failed to create patient: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to create patient: {str(e)}")
 
-@router.post("/patients/{no_rm}/save-diagnosis")
+@router.post("/{no_rm}/save-diagnosis")
 async def save_diagnosis(
     no_rm: str,
     request: SaveDiagnosisRequest,
@@ -497,7 +497,7 @@ async def save_diagnosis(
 
 # ===== PUT ENDPOINTS =====
 
-@router.put("/patients/{no_rm}")
+@router.put("/{no_rm}")
 async def update_patient(
     no_rm: str,
     patient_update: PatientUpdate,
@@ -575,7 +575,7 @@ async def update_patient(
 
 # ===== DELETE ENDPOINTS =====
 
-@router.delete("/patients/{no_rm}")
+@router.delete("/{no_rm}")
 async def delete_patient(
     no_rm: str,
     db: Session = Depends(get_db)
@@ -622,7 +622,7 @@ async def delete_patient(
 
 # ===== MEDICAL HISTORY ENDPOINTS =====
 
-@router.get("/patients/{no_rm}/medical-history")
+@router.get("/{no_rm}/medical-history")
 async def get_patient_medical_history(
     no_rm: str,
     limit: int = Query(10, ge=1, le=100, description="Number of records to retrieve"),
@@ -689,7 +689,7 @@ async def get_patient_medical_history(
         logger.error(f"❌ Failed to get medical history for {no_rm}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get medical history: {str(e)}")
 
-@router.get("/patients/{no_rm}/current-medications")
+@router.get("/{no_rm}/current-medications")
 async def get_current_medications(
     no_rm: str,
     db: Session = Depends(get_db)
@@ -757,45 +757,7 @@ async def get_current_medications(
         logger.error(f"❌ Failed to get current medications for {no_rm}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get current medications: {str(e)}")
 
-# ===== TESTING ENDPOINTS =====
-
-@router.post("/test-save-diagnosis")
-async def test_save_diagnosis(db: Session = Depends(get_db)):
-    """Test save diagnosis endpoint"""
-    try:
-        # Create test request
-        test_request = SaveDiagnosisRequest(
-            diagnosis_code="G43.0",
-            diagnosis_text="Migraine without aura",
-            medications=[
-                MedicationData(
-                    name="Paracetamol",
-                    dosage="500mg",
-                    frequency="3x daily",
-                    notes="Take after meals"
-                )
-            ],
-            notes="Test diagnosis from API",
-            interactions={"test": "interaction_data"}
-        )
-        
-        # Use test patient
-        test_no_rm = "rm0001"
-        
-        result = await save_diagnosis(test_no_rm, test_request, db)
-        
-        return {
-            "test_status": "success",
-            "result": result
-        }
-        
-    except Exception as e:
-        return {
-            "test_status": "failed",
-            "error": str(e)
-        }
-
-@router.get("/patients/stats")
+@router.get("/stats")
 async def get_patients_statistics(db: Session = Depends(get_db)):
     """Get patients statistics"""
     try:
@@ -932,7 +894,7 @@ def _build_search_condition(search_term: str) -> str:
 
 # ===== ADVANCED ENDPOINTS =====
 
-@router.get("/patients/export")
+@router.get("/export")
 async def export_patients(
     format: str = Query("json", pattern="^(json|csv)$", description="Export format"),
     db: Session = Depends(get_db)
@@ -997,7 +959,7 @@ async def export_patients(
         logger.error(f"❌ Failed to export patients: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to export patients: {str(e)}")
 
-@router.get("/patients/search-advanced")
+@router.get("/search-advanced")
 async def search_patients_advanced(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(10, ge=1, le=100, description="Results per page"),
@@ -1082,7 +1044,7 @@ async def search_patients_advanced(
         logger.error(f"❌ Failed advanced search: {e}")
         raise HTTPException(status_code=500, detail=f"Advanced search failed: {str(e)}")
 
-@router.post("/patients/bulk-import")
+@router.post("/bulk-import")
 async def bulk_import_patients(
     patients_data: List[PatientCreate],
     db: Session = Depends(get_db)
@@ -1164,7 +1126,7 @@ async def bulk_import_patients(
 
 # ===== HEALTH CHECK ENDPOINT =====
 
-@router.get("/patients/health")
+@router.get("/health")
 async def patients_health_check(db: Session = Depends(get_db)):
     """Health check for patients module"""
     try:

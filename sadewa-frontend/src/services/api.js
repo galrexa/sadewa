@@ -1,7 +1,7 @@
 // src/services/api.js - Clean API Service for SADEWA (No Mock Data)
 import axios from "axios";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000" || "https://sadewa.astralungiyan.com/api";
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://sadewa.astralungiyan.com/api";
 
 console.log("API Configuration:", { BASE_URL });
 
@@ -57,62 +57,6 @@ api.interceptors.response.use(
   }
 );
 
-// Drug Service Functions
-export const drugService = {
-  // Search drugs from database
-  async searchDrugs(query, limit = 10) {
-    try {
-      console.log(`Searching drugs: "${query}"`);
-      const response = await api.get("/drugs/search", {
-        params: { q: query, limit },
-      });
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error("Drug search failed:", error);
-      throw new Error(`Failed to search drugs: ${error.message}`);
-    }
-  },
-
-  // Autocomplete for medication input
-  async autocompleteDrugs(query, limit = 5) {
-    try {
-      const response = await api.get("/drugs/autocomplete", {
-        params: { q: query, limit },
-      });
-      return response.data.suggestions;
-    } catch (error) {
-      console.error("Drug autocomplete failed:", error);
-      throw new Error(`Failed to autocomplete drugs: ${error.message}`);
-    }
-  },
-
-  // Check interactions using database
-  async checkDrugInteractions(drugNames) {
-    try {
-      console.log("Checking drug interactions:", drugNames);
-      const drugNamesStr = drugNames.join(",");
-      const response = await api.get("/drugs/check-interactions", {
-        params: { drug_names: drugNamesStr },
-      });
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error("Drug interaction check failed:", error);
-      throw new Error(`Failed to check drug interactions: ${error.message}`);
-    }
-  },
-
-  // Get drug database stats
-  async getDrugStats() {
-    try {
-      const response = await api.get("/drugs/stats");
-      return { success: true, data: response.data };
-    } catch (error) {
-      console.error("Drug stats failed:", error);
-      throw new Error(`Failed to get drug stats: ${error.message}`);
-    }
-  },
-};
-
 // Main API Service Functions
 export const apiService = {
   // Expose the axios instance for direct use if needed
@@ -136,7 +80,7 @@ export const apiService = {
     try {
       console.log("Fetching all patients from backend...");
 
-      const response = await api.get("/patients/search", {
+      const response = await api.get("/api/patients/search", {
         params: {
           page: 1,
           limit: 100,
@@ -166,7 +110,7 @@ export const apiService = {
   async getPatientById(patientId) {
     try {
       console.log(`Fetching patient ${patientId} from API...`);
-      const response = await api.get(`/patients/${patientId}`);
+      const response = await api.get(`/api/patients/${patientId}`);
       return { success: true, data: response.data };
     } catch (error) {
       console.error(`Failed to fetch patient ${patientId} from API:`, error);
@@ -180,7 +124,7 @@ export const apiService = {
   async searchICD10(query, limit = 10) {
     try {
       console.log(`Searching ICD-10 for: "${query}"`);
-      const response = await api.get("/icd10/search", {
+      const response = await api.get("/api/icd10/search", {
         params: { q: query, limit },
       });
       console.log(`Found ${response.data.length} ICD-10 results`);
@@ -194,7 +138,7 @@ export const apiService = {
   async deletePatient(patientId) {
     try {
       console.log(`Deleting patient ${patientId} from API...`);
-      const response = await api.delete(`/patients/${patientId}`);
+      const response = await api.delete(`/api/patients/${patientId}`);
       return { success: true, data: response.data };
     } catch (error) {
       console.error(`Failed to delete patient ${patientId} from API:`, error);
@@ -208,7 +152,7 @@ export const apiService = {
   async getCurrentMedications(patientId) {
     try {
       const response = await api.get(
-        `/patients/${patientId}/current-medications`
+        `/api/patients/${patientId}/current-medications`
       );
       console.log("Current medications response:", response.data);
       return { success: true, ...response.data };
@@ -234,7 +178,7 @@ export const apiService = {
       console.log("Sending analysis payload:", formattedPayload);
 
       const response = await api.post(
-        "/analyze-interactions",
+        "/api/interactions/analyze-interactions",
         formattedPayload
       );
       console.log("Analysis response received:", response.data);
@@ -388,7 +332,7 @@ export const apiService = {
   async testGroq() {
     try {
       console.log("Testing Groq connection...");
-      const response = await api.get("/test-groq");
+      const response = await api.get("/api/test-groq");
       return { success: true, data: response.data };
     } catch (error) {
       console.error("Groq test failed:", error);

@@ -30,7 +30,7 @@ export const drugService = {
   // Get drug by exact name
   async getDrugByName(drugName) {
     try {
-      const response = await apiService.api.get("/api/drugs/by-name", {
+      const response = await apiService.api.get("/drugs/by-name", {
         params: { name: drugName.trim() },
       });
 
@@ -88,7 +88,7 @@ export const drugService = {
 
       const drugNamesStr = drugNames.join(",");
       const response = await apiService.api.get(
-        "/api/drugs/check-interactions",
+        "/drugs/check-interactions",
         {
           params: { drug_names: drugNamesStr },
         }
@@ -214,7 +214,7 @@ export const drugService = {
   // Get popular/common drugs
   async getPopularDrugs(limit = 10) {
     try {
-      const response = await apiService.api.get("/api/drugs/popular", {
+      const response = await apiService.api.get("/drugs/popular", {
         params: { limit },
       });
 
@@ -243,7 +243,7 @@ export const drugService = {
   // Get drug database statistics
   async getDrugStats() {
     try {
-      const response = await apiService.api.get("/api/drugs/stats");
+      const response = await apiService.api.get("/drugs/stats");
       return { success: true, data: response.data };
     } catch (error) {
       console.error("❌ Drug stats failed:", error);
@@ -276,7 +276,7 @@ export const drugService = {
         search_international: searchInternational,
       };
 
-      const response = await apiService.api.get("/api/drugs/search/advanced", {
+      const response = await apiService.api.get("/drugs/search/advanced", {
         params,
       });
 
