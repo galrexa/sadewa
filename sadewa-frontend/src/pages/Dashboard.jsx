@@ -27,6 +27,7 @@ const Dashboard = () => {
   const [interactionResults, setInteractionResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [patientToEdit, setPatientToEdit] = useState(null);
 
   const [error, setError] = useState(null);
 
@@ -86,13 +87,21 @@ const Dashboard = () => {
     setActiveTab("register");
   };
 
+  const handleEditPatient = (patient) => {
+    console.log("Setting patient to edit:", patient);
+    setPatientToEdit(patient); // Simpan data pasien yang akan diedit
+    setActiveTab("register"); // Pindah ke tab pendaftaran/edit
+  };
+
   const handleRegistrationSuccess = (newPatient) => {
     setShowRegistrationForm(false);
+    setPatientToEdit(null);
     setActiveTab("patients");
   };
 
   const handleRegistrationCancel = () => {
     setShowRegistrationForm(false);
+    setPatientToEdit(null);
     setActiveTab("patients");
   };
 
@@ -201,9 +210,7 @@ const Dashboard = () => {
                 <PatientList
                   onSelectPatient={handlePatientSelect}
                   onAddPatient={handleAddPatient}
-                  onEditPatient={(patient) => {
-                    console.log("Edit patient:", patient);
-                  }}
+                  onEditPatient={handleEditPatient}
                 />
               </div>
               <div className="bg-white rounded-xl shadow-lg p-6">
@@ -229,6 +236,7 @@ const Dashboard = () => {
               ← Kembali ke Daftar Pasien
             </button>
             <PatientRegistrationForm
+              patientToEdit={patientToEdit}
               onSuccess={handleRegistrationSuccess}
               onCancel={handleRegistrationCancel}
             />

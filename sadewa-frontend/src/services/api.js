@@ -176,6 +176,39 @@ export const apiService = {
     }
   },
 
+  // ✅ ADDED: Fungsi untuk Registrasi Pasien Baru (POST)
+  async registerPatient(patientData) {
+    try {
+      console.log("Registering new patient:", patientData);
+      const response = await api.post("/api/patients", patientData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error("Failed to register patient:", error);
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.message ||
+        "Gagal mendaftarkan pasien baru.";
+      throw new Error(`Registration failed: ${errorMessage}`);
+    }
+  },
+
+  // ✅ ADDED: Fungsi untuk Memperbarui Pasien (PUT)
+  async updatePatient(patientId, patientData) {
+    try {
+      console.log(`Updating patient ${patientId}:`, patientData);
+      // Menggunakan PUT untuk memperbarui seluruh data pasien
+      const response = await api.put(`/api/patients/${patientId}`, patientData);
+      return { success: true, data: response.data };
+    } catch (error) {
+      console.error(`Failed to update patient ${patientId}:`, error);
+      const errorMessage =
+        error.response?.data?.detail ||
+        error.message ||
+        "Gagal memperbarui data pasien.";
+      throw new Error(`Update failed: ${errorMessage}`);
+    }
+  },
+
   // ICD-10 services
   async searchICD10(query, limit = 10) {
     try {

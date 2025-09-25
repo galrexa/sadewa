@@ -1,6 +1,6 @@
 // sadewa-frontend/src/components/PatientRegistrationForm.jsx
 // ✅ COMPLETE FIXED VERSION - Match dengan database schema
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react"; // ✅ IMPORTED: useEffect
 import {
   User,
   Phone,
@@ -17,8 +17,20 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
-  const [formData, setFormData] = useState({
+// ✅ IMPORTED: apiService
+import { apiService } from "../services/api";
+
+// Menerima prop 'patientToEdit' untuk mode edit
+const PatientRegistrationForm = ({ patientToEdit, onSuccess, onCancel }) => {
+  // --- Initialization based on Mode ---
+  const isEditMode = !!patientToEdit;
+  const formTitle = isEditMode ? "Edit Data Pasien" : "Daftarkan Pasien Baru";
+  const submitButtonText = isEditMode ? "Simpan Perubahan" : "Daftar Pasien";
+  const successMessage = isEditMode
+    ? "Pasien Berhasil Diperbarui!"
+    : "Pasien Berhasil Didaftarkan!";
+
+  const initialFormState = {
     no_rm: "",
     name: "",
     birth_date: "",
@@ -29,20 +41,50 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     weight_kg: "",
     blood_types: "",
     allergies: "",
-  });
-  const [calculatedAge, setCalculatedAge] = useState(null); // ✅ ADDED: untuk display umur
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
+  const [calculatedAge, setCalculatedAge] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // ✅ ADDED: Function untuk menghitung umur detail
+  // ✅ ADDED: useEffect untuk mengisi form saat mode Edit
+  useEffect(() => {
+    if (isEditMode && patientToEdit) {
+      // Set form data dari patientToEdit
+      setFormData({
+        no_rm: patientToEdit.no_rm || "",
+        name: patientToEdit.name || "",
+        // Pastikan format tanggal (YYYY-MM-DD)
+        birth_date: patientToEdit.birth_date
+          ? patientToEdit.birth_date.split("T")[0]
+          : "",
+        gender: patientToEdit.gender || "",
+        address: patientToEdit.address || "",
+        phone: patientToEdit.phone || "",
+        // Konversi nilai numerik ke string untuk input form
+        height_cm: String(patientToEdit.height_cm || ""),
+        weight_kg: String(patientToEdit.weight_kg || ""),
+        blood_types: patientToEdit.blood_types || "",
+        allergies: patientToEdit.allergies || "",
+      });
+      // Hitung umur dari data yang di-load
+      setCalculatedAge(calculateAge(patientToEdit.birth_date));
+    } else {
+      // Jika mode registrasi baru, reset form
+      setFormData(initialFormState);
+      setCalculatedAge(null);
+    }
+  }, [patientToEdit]); // Dependency: Jalankan saat patientToEdit berubah
+
+  // ... (existing calculateAge function)
   const calculateAge = (birthDate) => {
     if (!birthDate) return null;
 
     const birth = new Date(birthDate);
     const today = new Date();
 
-    // Validasi tanggal lahir tidak boleh di masa depan
     if (birth > today) {
       return null;
     }
@@ -51,14 +93,12 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     let months = today.getMonth() - birth.getMonth();
     let days = today.getDate() - birth.getDate();
 
-    // Adjust untuk bulan negatif
     if (days < 0) {
       months--;
       const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
       days += lastMonth.getDate();
     }
 
-    // Adjust untuk tahun negatif
     if (months < 0) {
       years--;
       months += 12;
@@ -68,10 +108,12 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       years,
       months,
       days,
-      totalYears: years, // Untuk backend compatibility
+      totalYears: years,
       ageString: `${years} tahun, ${months} bulan, ${days} hari`,
     };
   };
+
+  // ... (existing generateNoRM function)
   const generateNoRM = async () => {
     try {
       // Get all existing patients to find the highest number
@@ -80,7 +122,6 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         const data = await response.json();
         const patients = data.patients || [];
 
-        // Find the highest rm number
         let maxNumber = 0;
         patients.forEach((patient) => {
           const match = patient.no_rm?.match(/^rm(\d{4})$/i);
@@ -92,7 +133,6 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           }
         });
 
-        // Generate next number with leading zeros
         const nextNumber = maxNumber + 1;
         return `rm${nextNumber.toString().padStart(4, "0")}`;
       }
@@ -100,11 +140,11 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       console.error("Error generating No. RM:", error);
     }
 
-    // Fallback: generate random if API call fails
-    const random = Math.floor(Math.random() * 9000) + 1000; // 1000-9999
+    const random = Math.floor(Math.random() * 9000) + 1000;
     return `rm${random.toString().padStart(4, "0")}`;
   };
 
+  // ... (existing handleChange function)
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -112,16 +152,15 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       [name]: value,
     }));
 
-    // ✅ ADDED: Auto-calculate age when birth_date changes
     if (name === "birth_date") {
       const ageData = calculateAge(value);
       setCalculatedAge(ageData);
     }
 
-    // Clear error saat user mulai mengetik
     if (error) setError("");
   };
 
+  // ... (existing handleGenerateNoRM function)
   const handleGenerateNoRM = async () => {
     const newNoRM = await generateNoRM();
     setFormData((prev) => ({
@@ -130,6 +169,7 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     }));
   };
 
+  // ... (existing validateForm function)
   const validateForm = () => {
     if (!formData.no_rm.trim()) {
       setError("Nomor rekam medis wajib diisi");
@@ -144,7 +184,6 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       return false;
     }
 
-    // ✅ ADDED: Validate birth date
     const ageData = calculateAge(formData.birth_date);
     if (!ageData) {
       setError("Tanggal lahir tidak valid atau di masa depan");
@@ -192,6 +231,7 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     return true;
   };
 
+  // ✅ MODIFIED: handleSubmit untuk mode POST dan PUT
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -200,55 +240,75 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
     setLoading(true);
     setError("");
 
-    try {
-      // ✅ FIXED: Ubah dari /api/patients/register ke /api/patients
-      const response = await fetch("/api/patients", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...formData,
-          age: calculatedAge?.totalYears || 0,
-          weight_kg: parseFloat(formData.weight_kg), // ✅ CHANGED: Kirim umur yang sudah dihitung
-          height_cm: parseFloat(formData.height_cm),
-        }),
-      });
+    // Payload yang disiapkan untuk dikirim ke API
+    const payload = {
+      ...formData,
+      age: calculatedAge?.totalYears || 0,
+      weight_kg: parseFloat(formData.weight_kg),
+      height_cm: parseFloat(formData.height_cm),
+    };
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Gagal membuat pasien baru");
+    try {
+      let result;
+
+      if (isEditMode) {
+        // --- LOGIKA EDIT (PUT) ---
+        const patientId = patientToEdit.id;
+        console.log(`Updating patient ID: ${patientId}`, payload);
+
+        // Menggunakan fungsi updatePatient yang baru ditambahkan
+        result = await apiService.updatePatient(patientId, payload);
+      } else {
+        // --- LOGIKA REGISTRASI (POST) ---
+        console.log("Registering new patient:", payload);
+
+        // Menggunakan fungsi registerPatient yang baru ditambahkan
+        result = await apiService.registerPatient(payload);
       }
 
-      const result = await response.json();
+      if (result.success) {
+        setSuccess(true);
 
-      setSuccess(true);
-
-      // Call success callback dengan data pasien
-      if (onSuccess) {
-        setTimeout(() => onSuccess(result), 1500);
+        if (onSuccess) {
+          setTimeout(() => onSuccess(result.data), 1500);
+        }
+      } else {
+        // Jika result.success false (jika ada error yang ditangani di apiService)
+        throw new Error(result.message || "Gagal menyimpan data pasien.");
       }
     } catch (err) {
-      setError(err.message);
+      // Tangkap error dari apiService
+      setError(
+        err.message || "Terjadi kesalahan saat komunikasi dengan server."
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleReset = () => {
-    setFormData({
-      no_rm: "",
-      name: "",
-      birth_date: "",
-      gender: "",
-      address: "",
-      phone: "",
-      height_cm: "",
-      weight_kg: "",
-      blood_types: "",
-      allergies: "",
-    });
-    setCalculatedAge(null); // ✅ ADDED: Reset calculated age
+    // Di mode edit, reset hanya mengembalikan ke data awal
+    if (isEditMode) {
+      setFormData({
+        no_rm: patientToEdit.no_rm,
+        name: patientToEdit.name,
+        birth_date: patientToEdit.birth_date
+          ? patientToEdit.birth_date.split("T")[0]
+          : "",
+        gender: patientToEdit.gender,
+        address: patientToEdit.address,
+        phone: patientToEdit.phone,
+        height_cm: String(patientToEdit.height_cm),
+        weight_kg: String(patientToEdit.weight_kg),
+        blood_types: patientToEdit.blood_types,
+        allergies: patientToEdit.allergies,
+      });
+      setCalculatedAge(calculateAge(patientToEdit.birth_date));
+    } else {
+      // Di mode registrasi baru, kosongkan form
+      setFormData(initialFormState);
+      setCalculatedAge(null);
+    }
     setError("");
     setSuccess(false);
   };
@@ -259,10 +319,11 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         <div className="text-center">
           <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Pasien Berhasil Didaftarkan!
+            {successMessage}
           </h3>
           <p className="text-gray-600 mb-4">
-            {formData.name} telah terdaftar dengan No. RM: {formData.no_rm}
+            {formData.name} {isEditMode ? "(diperbarui)" : "(terdaftar)"} dengan
+            No. RM: {formData.no_rm}
             <br />
             <span className="text-sm text-gray-500">
               Umur: {calculatedAge?.ageString || "Tidak terhitung"}
@@ -282,7 +343,7 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
         <div className="flex items-center space-x-3">
           <UserCheck className="h-8 w-8 text-blue-600" />
           <h2 className="text-2xl font-bold text-gray-900">
-            Daftarkan Pasien Baru
+            {formTitle} {/* Judul dinamis */}
           </h2>
         </div>
       </div>
@@ -297,7 +358,7 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* ✅ ADDED: No. RM field with auto-generate */}
+        {/* No. RM field with auto-generate */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <IdCard className="inline h-4 w-4 mr-1" />
@@ -312,14 +373,18 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Masukkan No. RM atau generate otomatis"
               required
+              disabled={isEditMode}
             />
-            <button
-              type="button"
-              onClick={handleGenerateNoRM}
-              className="px-3 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 text-sm font-medium"
-            >
-              Generate
-            </button>
+            {/* Tombol Generate hanya muncul di mode Registrasi Baru */}
+            {!isEditMode && (
+              <button
+                type="button"
+                onClick={handleGenerateNoRM}
+                className="px-3 py-2 bg-blue-50 text-blue-600 border border-blue-200 rounded-lg hover:bg-blue-100 focus:ring-2 focus:ring-blue-500 text-sm font-medium"
+              >
+                Generate
+              </button>
+            )}
           </div>
         </div>
 
@@ -352,10 +417,10 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               value={formData.birth_date}
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              max={new Date().toISOString().split("T")[0]} // ✅ Tidak boleh pilih tanggal masa depan
+              max={new Date().toISOString().split("T")[0]}
               required
             />
-            {/* ✅ ADDED: Display calculated age */}
+            {/* Display calculated age */}
             {calculatedAge && (
               <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-700 font-medium">
@@ -443,6 +508,28 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
           </div>
         </div>
 
+        {/* Golongan Darah field */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Heart className="inline h-4 w-4 mr-1" />
+            Golongan Darah *
+          </label>
+          <select
+            name="blood_types"
+            value={formData.blood_types}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+          >
+            <option value="">Pilih golongan darah</option>
+            <option value="A">A</option>
+            <option value="B">B</option>
+            <option value="AB">AB</option>
+            <option value="O">O</option>
+            <option value="Other">Lainnya/Tidak diketahui</option>
+          </select>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             <AlertTriangle className="inline h-4 w-4 mr-1" />
@@ -483,12 +570,12 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                Mendaftarkan...
+                {isEditMode ? "Menyimpan..." : "Mendaftarkan..."}
               </>
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Daftar Pasien
+                {submitButtonText}
               </>
             )}
           </button>
@@ -498,7 +585,8 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
             onClick={handleReset}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500"
           >
-            Reset
+            {isEditMode ? "Reset Form" : "Reset"}{" "}
+            {/* Reset ke data awal/kosong */}
           </button>
 
           {onCancel && (
@@ -507,7 +595,7 @@ const PatientRegistrationForm = ({ onSuccess, onCancel }) => {
               onClick={onCancel}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 focus:ring-2 focus:ring-gray-500"
             >
-              Batal
+              Kembali
             </button>
           )}
         </div>
