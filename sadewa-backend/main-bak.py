@@ -1,10 +1,8 @@
 import time
 import logging
 import os
-import socket
 from datetime import datetime
 from typing import Dict, Any
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,49 +29,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ===== LIFESPAN EVENT HANDLER (REPLACES DEPRECATED on_event) =====
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Application lifespan handler for startup and shutdown events"""
-    
-    # ===== STARTUP =====
-    logger.info(f"🚀 Starting SADEWA API v{app.version}")
-    
-    # Initialize global state
-    app.state.request_count = 0
-    app.state.total_processing_time = 0.0
-    app.state.start_time = datetime.now()
-    
-    # Test database connection
-    if test_database_connection():
-        logger.info("✅ Database connection established.")
-        try:
-            stats = get_database_stats()
-            logger.info(f"📊 Database stats: {stats}")
-        except Exception as e:
-            logger.warning(f"Could not get initial database stats: {e}")
-    else:
-        logger.error("❌ Database connection failed. Please check database configuration and connectivity.")
-    
-    logger.info("🎯 Application startup completed successfully")
-    
-    yield  # Application is running
-    
-    # ===== SHUTDOWN =====
-    logger.info("🛑 Shutting down SADEWA API")
-    
-    if engine:
-        try:
-            engine.dispose()
-            logger.info("🔌 Database connection pool closed.")
-        except Exception as e:
-            logger.error(f"Error closing database connection: {e}")
-    
-    logger.info("✅ SADEWA API shutdown completed.")
-
-# ===== CREATE FASTAPI APP WITH LIFESPAN =====
-
+# Create FastAPI app with optimized settings
 app = FastAPI(
     title="SADEWA - Smart Assistant for Drug & Evidence Warning",
     description="""
@@ -86,11 +42,9 @@ app = FastAPI(
     - **Drug Interaction Analysis** - Real-time safety checking
     - **Performance Monitoring** - Built-in analytics and caching
     """,
-    version="2.1.0",
-    openapi_version="3.0.2",
+    version="2.1.0-optimized",
     docs_url="/docs",
-    redoc_url="/redoc",
-    lifespan=lifespan  # ✅ FIXED: Using new lifespan handler
+    redoc_url="/redoc"
 )
 
 # ===== MIDDLEWARE CONFIGURATION =====
@@ -108,6 +62,11 @@ app.add_middleware(
 # Compression middleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+# Global state for monitoring
+app.state.request_count = 0
+app.state.total_processing_time = 0.0
+app.state.start_time = datetime.now()
+
 # ===== CUSTOM MIDDLEWARE =====
 
 @app.middleware("http")
@@ -122,9 +81,8 @@ async def performance_middleware(request: Request, call_next):
         processing_time = (time.perf_counter() - start_time) * 1000
         
         # Update global stats
-        if hasattr(app.state, 'request_count'):
-            app.state.request_count += 1
-            app.state.total_processing_time += processing_time
+        app.state.request_count += 1
+        app.state.total_processing_time += processing_time
         
         # Add performance headers
         response.headers["X-Request-ID"] = request_id
@@ -155,47 +113,55 @@ async def performance_middleware(request: Request, call_next):
             }
         )
 
-# ===== MONITORING ENDPOINT =====
-
 @app.get("/monitoring")
 async def monitoring_dashboard():
-    """System monitoring endpoint for ops dashboard"""
+    """System monitoring endpoint for ops dashboard - FIXED VERSION"""
     try:
-        # Performance metrics
-        uptime = datetime.now() - app.state.start_time if hasattr(app.state, 'start_time') else None
-        avg_processing_time = (
-            app.state.total_processing_time / app.state.request_count
-            if hasattr(app.state, 'request_count') and app.state.request_count > 0 else 0
-        )
+        uptime = datetime.now() - app.state.start_time
         
+        # Performance metrics - FIXED
         performance_metrics = {
-            "uptime_seconds": int(uptime.total_seconds()) if uptime else 0,
-            "total_requests": getattr(app.state, 'request_count', 0),
-            "avg_processing_time_ms": round(avg_processing_time, 2),
-            "requests_per_minute": 0  # Can be calculated if needed
+            "uptime_hours": round(uptime.total_seconds() / 3600, 2),
+            "total_requests": app.state.request_count,
+            "requests_per_hour": round(
+                app.state.request_count / max(uptime.total_seconds() / 3600, 0.001), 2
+            ),
+            "avg_response_time_ms": round(
+                app.state.total_processing_time / max(app.state.request_count, 1), 2
+            )
         }
         
-        # Database connection pool stats
+        # Database connection pool stats - with error handling
+        pool_stats = {}
         try:
-            pool_stats = {
-                "size": engine.pool.size() if engine and hasattr(engine, 'pool') else 0,
-                "checked_in": engine.pool.checkedin() if engine and hasattr(engine, 'pool') else 0,
-                "overflow": engine.pool.overflow() if engine and hasattr(engine, 'pool') else 0,
-                "status": "connected" if test_database_connection() else "disconnected"
-            }
+            if hasattr(engine, 'pool'):
+                pool_stats = {
+                    "pool_size": engine.pool.size(),
+                    "checked_in": engine.pool.checkedin(),
+                    "checked_out": engine.pool.checkedout(),
+                    "overflow": engine.pool.overflow(),
+                    "invalid": engine.pool.invalid()
+                }
         except Exception as e:
             pool_stats = {"error": f"Could not get pool stats: {str(e)}"}
         
-        # Database activity stats
+        # Recent database activity
+        database_activity = {"status": "checking..."}
         try:
             with engine.connect() as connection:
-                activity_result = connection.execute(
-                    text("SELECT COUNT(*) as total_patients FROM patients LIMIT 1")
-                ).fetchone()
-                activity_stats = activity_result[0] if activity_result else 0
+                # Get recent activity (last hour)
+                activity_query = text("""
+                    SELECT 
+                        COUNT(CASE WHEN created_at >= DATE_SUB(NOW(), INTERVAL 1 HOUR) THEN 1 END) as new_patients_1h,
+                        COUNT(*) as total_patients
+                    FROM patients
+                """)
+                
+                activity_stats = connection.execute(activity_query).fetchone()
                 
                 database_activity = {
-                    "total_patients": activity_stats if activity_stats else 0,
+                    "new_patients_last_hour": activity_stats.new_patients_1h if activity_stats else 0,
+                    "total_patients": activity_stats.total_patients if activity_stats else 0,
                     "last_checked": datetime.now().isoformat()
                 }
         except Exception as e:
@@ -205,10 +171,10 @@ async def monitoring_dashboard():
             "system_info": {
                 "version": "2.1.0-optimized",
                 "environment": os.getenv("ENVIRONMENT", "development"),
-                "start_time": app.state.start_time.isoformat() if hasattr(app.state, 'start_time') else None,
+                "start_time": app.state.start_time.isoformat(),
                 "current_time": datetime.now().isoformat()
             },
-            "performance_metrics": performance_metrics,
+            "performance_metrics": performance_metrics,  # FIXED - ini yang missing
             "database": {
                 "connection_pool": pool_stats,
                 "activity": database_activity
@@ -227,6 +193,7 @@ async def monitoring_dashboard():
                 "status": "running_with_errors"
             }
         }
+
 
 # ===== EXCEPTION HANDLERS =====
 
@@ -253,32 +220,30 @@ async def database_exception_handler(request: Request, exc: SQLAlchemyError):
         }
     )
 
-# ===== ROUTER REGISTRATION =====
-
-app.include_router(patients_router, prefix="/patients", tags=["Patients"])
-app.include_router(medical_records_router, prefix="/medical-records", tags=["Medical Records"])
-app.include_router(ai_diagnosis_router, prefix="/ai", tags=["AI Diagnosis"])
-app.include_router(icd10.router, prefix="/icd10", tags=["ICD10"])
-app.include_router(interactions_router, prefix="/interactions", tags=["Interactions"])
-app.include_router(drugs.router, prefix="/drugs", tags=["Drugs"])
+app.include_router(patients_router, prefix="/api/patients", tags=["Patients"])
+app.include_router(medical_records_router, prefix="/api", tags=["Medical Records"])
+app.include_router(ai_diagnosis_router, prefix="/api", tags=["AI Diagnosis"])
+app.include_router(icd10.router, prefix="/api/icd10", tags=["ICD10"])
+app.include_router(interactions_router, prefix="/api", tags=["Interactions"])
+app.include_router(drugs.router, prefix="/api/drugs", tags=["Drugs"])
 
 # ===== ROOT & HEALTH ENDPOINTS =====
 
 @app.get("/", tags=["System"])
 async def root():
     """Root endpoint with system information."""
-    uptime = datetime.now() - app.state.start_time if hasattr(app.state, 'start_time') else None
+    uptime = datetime.now() - app.state.start_time
     avg_processing_time = (
         app.state.total_processing_time / app.state.request_count
-        if hasattr(app.state, 'request_count') and app.state.request_count > 0 else 0
+        if app.state.request_count > 0 else 0
     )
     return {
         "message": "SADEWA API - Smart Assistant for Drug & Evidence Warning",
         "version": app.version,
         "status": "operational",
         "performance": {
-            "uptime_seconds": int(uptime.total_seconds()) if uptime else 0,
-            "total_requests": getattr(app.state, 'request_count', 0),
+            "uptime_seconds": int(uptime.total_seconds()),
+            "total_requests": app.state.request_count,
             "avg_processing_time_ms": round(avg_processing_time, 2)
         },
         "docs": app.docs_url,
@@ -310,75 +275,40 @@ async def health_check():
     
     return JSONResponse(status_code=status_code, content=response_content)
 
-# ===== UTILITY FUNCTIONS =====
+# ===== STARTUP & SHUTDOWN EVENTS =====
 
-def find_free_port(start_port=8000, max_attempts=100):
-    """
-    Find available port starting from start_port.
-    Returns available port or raises RuntimeError if none found.
-    """
-    for port in range(start_port, start_port + max_attempts):
+@app.on_event("startup")
+def startup_event():
+    """Application startup initialization."""
+    logger.info(f"🚀 Starting SADEWA API v{app.version}")
+    if test_database_connection():
+        logger.info("✅ Database connection established.")
         try:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                s.bind(('0.0.0.0', port))
-                logger.info(f"✅ Port {port} is available")
-                return port
-        except OSError as e:
-            logger.debug(f"Port {port} is not available: {e}")
-            continue
-    
-    raise RuntimeError(f"No available ports found in range {start_port}-{start_port + max_attempts}")
+            stats = get_database_stats()
+            logger.info(f"📊 Database stats: {stats}")
+        except Exception as e:
+            logger.warning(f"Could not get initial database stats: {e}")
+    else:
+        logger.error("❌ Database connection failed. Please check database configuration and connectivity.")
+
+@app.on_event("shutdown")
+def shutdown_event():
+    """Application shutdown cleanup."""
+    logger.info("🛑 Shutting down SADEWA API")
+    if engine:
+        engine.dispose()
+        logger.info("🔌 Database connection pool closed.")
+    logger.info("✅ SADEWA API shutdown completed.")
 
 # ===== DEVELOPMENT SERVER =====
 
 if __name__ == "__main__":
-    try:
-        # Get port from environment or find free port
-        env_port = os.getenv("PORT")
-        if env_port:
-            try:
-                port = int(env_port)
-                # Test if the specified port is available
-                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                    s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                    s.bind(('0.0.0.0', port))
-                logger.info(f"✅ Using port {port} from environment variable")
-            except (ValueError, OSError) as e:
-                logger.warning(f"Port {env_port} from environment is not available: {e}")
-                port = find_free_port()
-        else:
-            port = find_free_port()
-        
-        # Development settings
-        is_development = os.getenv("ENVIRONMENT", "development").lower() == "development"
-        
-        # Server startup message
-        print("=" * 60)
-        print("🚀 SADEWA API Server Starting...")
-        print(f"📡 Host: 0.0.0.0")
-        print(f"🔌 Port: {port}")
-        print(f"🌍 Environment: {'Development' if is_development else 'Production'}")
-        print(f"📚 API Docs: http://localhost:{port}/docs")
-        print(f"🏥 Health Check: http://localhost:{port}/health")
-        print("=" * 60)
-        
-        # Start server
-        uvicorn.run(
-            "main:app",
-            host="0.0.0.0",
-            port=port,
-            reload=is_development,
-            log_level="info",
-            access_log=True
-        )
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to start server: {e}")
-        print(f"\n🚨 Server startup failed: {e}")
-        print("\n💡 Troubleshooting tips:")
-        print("1. Check if another service is using the port")
-        print("2. Run as administrator if permission error persists")
-        print("3. Check database connection settings")
-        print("4. Try specifying a different port: PORT=8001 python main.py")
-        exit(1)
+    port = int(os.getenv("PORT", 8000))
+    is_development = os.getenv("ENVIRONMENT", "development").lower() == "development"
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=port,
+        reload=is_development,
+        log_level="info"
+    )
